@@ -223,7 +223,7 @@ const SignupForm = () => {
         await createVerify(); // Trigger email verification
         // Reset the form store after successful registration
         // Redirect to the "Check Your Email" page
-        router.push("/check-email");
+        router.push("/signIn");
       }
     } catch (error) {
       // Display the error message
