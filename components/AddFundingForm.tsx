@@ -21,6 +21,38 @@ const FundingForm = ({ editingId = "" }) => {
   const [message, setMessage] = useState({ text: "", type: "" });
   const [showForm, setShowForm] = useState(false);
 
+  // Admin controls state
+  const [isAdmin] = useState(true); // You can replace this with actual admin check
+  const [showAdminPanel, setShowAdminPanel] = useState(false);
+
+  // Dynamic options state
+  const [focusAreas, setFocusAreas] = useState([
+    "health",
+    "education", 
+    "environment",
+    "technology",
+    "other"
+  ]);
+  const [fundingTypes, setFundingTypes] = useState([
+    "fund",
+    "donation",
+    "grant", 
+    "scholarship",
+    "fellowship",
+    "award",
+    "other"
+  ]);
+
+  // New option inputs
+  const [newFocusArea, setNewFocusArea] = useState("");
+  const [newFundingType, setNewFundingType] = useState("");
+  
+  // Form-level custom option inputs
+  const [customFocusArea, setCustomFocusArea] = useState("");
+  const [customFundingType, setCustomFundingType] = useState("");
+  const [showCustomFocusInput, setShowCustomFocusInput] = useState(false);
+  const [showCustomFundingInput, setShowCustomFundingInput] = useState(false);
+
   // Initialize the form with the user_id populated from the context
   const [formData, setFormData] = useState<Funding>({
     funding_id: "",
@@ -28,9 +60,9 @@ const FundingForm = ({ editingId = "" }) => {
     title: "",
     donor: "",
     eligibre_countries: "",
-    focus_earlier: "",
+    focus_earlier: [],
     grant_size: "",
-    funding_type: "",
+    funding_type: [],
     closing_date: new Date().toISOString().split("T")[0],
     reference_link: "",
   });
@@ -85,6 +117,12 @@ const FundingForm = ({ editingId = "" }) => {
           closing_date: result.closing_date
             ? result.closing_date.split("T")[0]
             : new Date().toISOString().split("T")[0],
+          focus_earlier: Array.isArray(result.focus_earlier) 
+            ? result.focus_earlier 
+            : result.focus_earlier ? [result.focus_earlier] : [],
+          funding_type: Array.isArray(result.funding_type)
+            ? result.funding_type
+            : result.funding_type ? [result.funding_type] : [],
         });
         setIsEditing(true);
       }
@@ -109,6 +147,108 @@ const FundingForm = ({ editingId = "" }) => {
     }));
   };
 
+  // Handle checkbox changes for multi-select fields
+  const handleCheckboxChange = (
+    fieldName: 'focus_earlier' | 'funding_type',
+    value: string
+  ) => {
+    setFormData(prevState => {
+      const currentArray = Array.isArray(prevState[fieldName]) 
+        ? prevState[fieldName] as string[]
+        : [];
+      
+      const updatedArray = currentArray.includes(value)
+        ? currentArray.filter(item => item !== value)
+        : [...currentArray, value];
+      
+      return {
+        ...prevState,
+        [fieldName]: updatedArray
+      };
+    });
+  };
+
+  // Admin functions to add new options
+  const addFocusArea = () => {
+    if (newFocusArea.trim() && !focusAreas.includes(newFocusArea.toLowerCase().trim())) {
+      setFocusAreas([...focusAreas, newFocusArea.toLowerCase().trim()]);
+      setNewFocusArea("");
+      toast.success("Focus area added successfully!");
+    } else {
+      toast.error("Focus area already exists or is empty!");
+    }
+  };
+
+  const addFundingType = () => {
+    if (newFundingType.trim() && !fundingTypes.includes(newFundingType.toLowerCase().trim())) {
+      setFundingTypes([...fundingTypes, newFundingType.toLowerCase().trim()]);
+      setNewFundingType("");
+      toast.success("Funding type added successfully!");
+    } else {
+      toast.error("Funding type already exists or is empty!");
+    }
+  };
+
+  // Remove options (admin only)
+  const removeFocusArea = (area: string) => {
+    setFocusAreas(focusAreas.filter(item => item !== area));
+    // Also remove from any selected items
+    setFormData(prev => ({
+      ...prev,
+      focus_earlier: (prev.focus_earlier as string[]).filter(item => item !== area)
+    }));
+    toast.success("Focus area removed!");
+  };
+
+  const removeFundingType = (type: string) => {
+    setFundingTypes(fundingTypes.filter(item => item !== type));
+    // Also remove from any selected items
+    setFormData(prev => ({
+      ...prev,
+      funding_type: (prev.funding_type as string[]).filter(item => item !== type)
+    }));
+    toast.success("Funding type removed!");
+  };
+
+  // Add custom option from form
+  const addCustomFocusArea = () => {
+    if (customFocusArea.trim() && !focusAreas.includes(customFocusArea.toLowerCase().trim())) {
+      const newArea = customFocusArea.toLowerCase().trim();
+      setFocusAreas([...focusAreas, newArea]);
+      
+      // Automatically select the new option
+      setFormData(prev => ({
+        ...prev,
+        focus_earlier: [...(prev.focus_earlier as string[]), newArea]
+      }));
+      
+      setCustomFocusArea("");
+      setShowCustomFocusInput(false);
+      toast.success("Custom focus area added and selected!");
+    } else {
+      toast.error("Focus area already exists or is empty!");
+    }
+  };
+
+  const addCustomFundingType = () => {
+    if (customFundingType.trim() && !fundingTypes.includes(customFundingType.toLowerCase().trim())) {
+      const newType = customFundingType.toLowerCase().trim();
+      setFundingTypes([...fundingTypes, newType]);
+      
+      // Automatically select the new option
+      setFormData(prev => ({
+        ...prev,
+        funding_type: [...(prev.funding_type as string[]), newType]
+      }));
+      
+      setCustomFundingType("");
+      setShowCustomFundingInput(false);
+      toast.success("Custom funding type added and selected!");
+    } else {
+      toast.error("Funding type already exists or is empty!");
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       funding_id: "",
@@ -116,9 +256,9 @@ const FundingForm = ({ editingId = "" }) => {
       title: "",
       donor: "",
       eligibre_countries: "",
-      focus_earlier: "",
+      focus_earlier: [],
       grant_size: "",
-      funding_type: "",
+      funding_type: [],
       closing_date: new Date().toISOString().split("T")[0],
       reference_link: "",
     });
@@ -133,9 +273,7 @@ const FundingForm = ({ editingId = "" }) => {
       if (isEditing) {
         // Update existing funding
         result = await updateFunding(formData.funding_id, formData);
-
         setMessage({ text: "Funding updated successfully!", type: "success" });
-
         // Update the funding in the local state
         setFundings((prevFundings) =>
           prevFundings.map((item) =>
@@ -146,13 +284,11 @@ const FundingForm = ({ editingId = "" }) => {
         // Create new funding
         result = await createFunding(formData);
         setMessage({ text: "Funding created successfully!", type: "success" });
-
         // Add the new funding to the local state immediately
         if (result) {
           setFundings((prevFundings) => [...prevFundings, result]);
         }
       }
-
       // Reset form and hide it after successful submission
       resetForm();
       setShowForm(false);
@@ -179,12 +315,10 @@ const FundingForm = ({ editingId = "" }) => {
     try {
       await deleteFunding(fundingId);
       setMessage({ text: "Funding deleted successfully!", type: "success" });
-
       // Remove the deleted funding from the local state immediately
       setFundings((prevFundings) =>
         prevFundings.filter((item) => item.funding_id !== fundingId)
       );
-
       // Reset form if we're editing the deleted funding
       if (isEditing && formData.funding_id === fundingId) {
         resetForm();
@@ -204,6 +338,12 @@ const FundingForm = ({ editingId = "" }) => {
       closing_date: funding.closing_date
         ? funding.closing_date.split("T")[0]
         : new Date().toISOString().split("T")[0],
+      focus_earlier: Array.isArray(funding.focus_earlier) 
+        ? funding.focus_earlier 
+        : funding.focus_earlier ? [funding.focus_earlier] : [],
+      funding_type: Array.isArray(funding.funding_type)
+        ? funding.funding_type
+        : funding.funding_type ? [funding.funding_type] : [],
     });
     setIsEditing(true);
     setShowForm(true);
@@ -218,6 +358,95 @@ const FundingForm = ({ editingId = "" }) => {
           duration: 3000,
         }}
       />
+
+      {/* Admin Panel */}
+      {isAdmin && (
+        <div className="mb-6">
+          <button
+            onClick={() => setShowAdminPanel(!showAdminPanel)}
+            className="flex items-center space-x-2 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-all"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span>Admin Panel</span>
+          </button>
+
+          {showAdminPanel && (
+            <div className="mt-4 p-6 bg-gray-50 rounded-lg border">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Manage Options</h3>
+              
+              {/* Focus Areas Management */}
+              <div className="mb-6">
+                <h4 className="font-medium text-gray-700 mb-2">Focus Areas</h4>
+                <div className="flex space-x-2 mb-2">
+                  <input
+                    type="text"
+                    value={newFocusArea}
+                    onChange={(e) => setNewFocusArea(e.target.value)}
+                    placeholder="Add new focus area"
+                    className="flex-1 p-2 border border-gray-300 rounded-md"
+                  />
+                  <button
+                    onClick={addFocusArea}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                  >
+                    Add
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {focusAreas.map((area) => (
+                    <div key={area} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                      <span className="capitalize">{area}</span>
+                      <button
+                        onClick={() => removeFocusArea(area)}
+                        className="ml-2 text-blue-600 hover:text-blue-800"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Funding Types Management */}
+              <div>
+                <h4 className="font-medium text-gray-700 mb-2">Funding Types</h4>
+                <div className="flex space-x-2 mb-2">
+                  <input
+                    type="text"
+                    value={newFundingType}
+                    onChange={(e) => setNewFundingType(e.target.value)}
+                    placeholder="Add new funding type"
+                    className="flex-1 p-2 border border-gray-300 rounded-md"
+                  />
+                  <button
+                    onClick={addFundingType}
+                    className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                  >
+                    Add
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {fundingTypes.map((type) => (
+                    <div key={type} className="flex items-center bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">
+                      <span className="capitalize">{type}</span>
+                      <button
+                        onClick={() => removeFundingType(type)}
+                        className="ml-2 text-purple-600 hover:text-purple-800"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Message Display */}
       {message.text && (
         <div
@@ -355,29 +584,70 @@ const FundingForm = ({ editingId = "" }) => {
 
           {/* Grid for smaller fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Focus Area */}
+            {/* Focus Area - Now with checkboxes */}
             <div className="form-group">
-              <label
-                htmlFor="focus_earlier"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Focus Area
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Focus Areas (Select multiple)
               </label>
-              <select
-                name="focus_earlier"
-                id="focus_earlier"
-                onChange={handleChange}
-                value={formData.focus_earlier || ""}
-                className="w-full p-2 mt-1 bg-white border border-gray-300 rounded-md text-gray-700 focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:outline-none"
-                required
-              >
-                <option value="">Select Focus Area</option>
-                <option value="health">Health</option>
-                <option value="education">Education</option>
-                <option value="environment">Environment</option>
-                <option value="technology">Technology</option>
-                <option value="other">Other</option>
-              </select>
+              <div className="space-y-2 max-h-32 overflow-y-auto border border-gray-300 rounded-md p-2">
+                {focusAreas.map((area) => (
+                  <label key={area} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={(formData.focus_earlier as string[])?.includes(area) || false}
+                      onChange={() => handleCheckboxChange('focus_earlier', area)}
+                      className="text-green-600 focus:ring-green-500"
+                    />
+                    <span className="text-sm capitalize text-gray-700">{area}</span>
+                  </label>
+                ))}
+              </div>
+              
+              {/* Add custom focus area option */}
+              <div className="mt-2">
+                {!showCustomFocusInput ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomFocusInput(true)}
+                    className="text-sm text-blue-600 hover:text-blue-800 underline"
+                  >
+                    + Add custom focus area
+                  </button>
+                ) : (
+                  <div className="flex space-x-2 mt-2">
+                    <input
+                      type="text"
+                      value={customFocusArea}
+                      onChange={(e) => setCustomFocusArea(e.target.value)}
+                      placeholder="Enter custom focus area"
+                      className="flex-1 text-sm p-2 border border-gray-300 rounded-md"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addCustomFocusArea();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={addCustomFocusArea}
+                      className="px-2 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
+                    >
+                      Add
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCustomFocusInput(false);
+                        setCustomFocusArea("");
+                      }}
+                      className="px-2 py-1 bg-gray-500 text-white text-sm rounded-md hover:bg-gray-600"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Grant Size */}
@@ -404,31 +674,70 @@ const FundingForm = ({ editingId = "" }) => {
               </select>
             </div>
 
-            {/* Funding Type */}
+            {/* Funding Type - Now with checkboxes */}
             <div className="form-group">
-              <label
-                htmlFor="funding_type"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Type
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Funding Types (Select multiple)
               </label>
-              <select
-                name="funding_type"
-                id="funding_type"
-                onChange={handleChange}
-                value={formData.funding_type || ""}
-                className="w-full p-2 mt-1 bg-white border border-gray-300 rounded-md text-gray-700 focus:ring-2 focus:ring-green-500 focus:border-green-500 focus:outline-none"
-                required
-              >
-                <option value="">Select Funding Type</option>
-                <option value="fund">Fund</option>
-                <option value="donation">Donation</option>
-                <option value="grant">Grant</option>
-                <option value="scholarship">Scholarship</option>
-                <option value="fellowship">Fellowship</option>
-                <option value="award">Award</option>
-                <option value="other">Other</option>
-              </select>
+              <div className="space-y-2 max-h-32 overflow-y-auto border border-gray-300 rounded-md p-2">
+                {fundingTypes.map((type) => (
+                  <label key={type} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={(formData.funding_type as string[])?.includes(type) || false}
+                      onChange={() => handleCheckboxChange('funding_type', type)}
+                      className="text-green-600 focus:ring-green-500"
+                    />
+                    <span className="text-sm capitalize text-gray-700">{type}</span>
+                  </label>
+                ))}
+              </div>
+              
+              {/* Add custom funding type option */}
+              <div className="mt-2">
+                {!showCustomFundingInput ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomFundingInput(true)}
+                    className="text-sm text-blue-600 hover:text-blue-800 underline"
+                  >
+                    + Add custom funding type
+                  </button>
+                ) : (
+                  <div className="flex space-x-2 mt-2">
+                    <input
+                      type="text"
+                      value={customFundingType}
+                      onChange={(e) => setCustomFundingType(e.target.value)}
+                      placeholder="Enter custom funding type"
+                      className="flex-1 text-sm p-2 border border-gray-300 rounded-md"
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          addCustomFundingType();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={addCustomFundingType}
+                      className="px-2 py-1 bg-green-600 text-white text-sm rounded-md hover:bg-green-700"
+                    >
+                      Add
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCustomFundingInput(false);
+                        setCustomFundingType("");
+                      }}
+                      className="px-2 py-1 bg-gray-500 text-white text-sm rounded-md hover:bg-gray-600"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Closing Date */}
@@ -530,16 +839,31 @@ const FundingForm = ({ editingId = "" }) => {
                 <h3 className="text-xl font-semibold text-gray-800">
                   {funding.title}
                 </h3>
-                <div className="my-3">
-                  <span className="inline-block px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-                    {funding.funding_type}
-                  </span>
+                <div className="my-3 flex flex-wrap gap-1">
+                  {Array.isArray(funding.funding_type) 
+                    ? funding.funding_type.map((type) => (
+                        <span key={type} className="inline-block px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full capitalize">
+                          {type}
+                        </span>
+                      ))
+                    : funding.funding_type && (
+                        <span className="inline-block px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full capitalize">
+                          {funding.funding_type}
+                        </span>
+                      )
+                  }
                 </div>
                 <p className="text-sm text-gray-600 mt-2">
                   Donor: {funding.donor}
                 </p>
                 <p className="text-sm text-gray-600">
                   Grant Size: {funding.grant_size}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Focus Areas: {Array.isArray(funding.focus_earlier) 
+                    ? funding.focus_earlier.join(", ")
+                    : funding.focus_earlier || "N/A"
+                  }
                 </p>
                 <p className="text-sm text-gray-600">
                   Closing Date:{" "}

@@ -81,8 +81,10 @@ const FundingList = () => {
         (funding.title?.toLowerCase().includes(titleTerm) || 
          funding.donor?.toLowerCase().includes(titleTerm));
       
-      const matchesArea = !areaTerm || 
-        (funding.focus_earlier?.toLowerCase().includes(areaTerm));
+      const matchesArea = !areaTerm ||
+        (Array.isArray(funding.focus_earlier)
+          ? funding.focus_earlier.join(" ").toLowerCase().includes(areaTerm)
+          : false);
       
       return matchesTitle && matchesArea;
     });
