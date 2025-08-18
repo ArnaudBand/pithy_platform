@@ -1122,7 +1122,7 @@ export const createPost = async (data: Post) => {
         const fileName = `post-${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileType}`;
         const mimeType = `${base64Match[1]}/${fileType}`;
 
-        file = new File([binaryData], fileName, { type: mimeType });
+        file = new File([new Uint8Array(binaryData)], fileName, { type: mimeType });
         console.log(
           `Created ${mediaType} file: ${fileName}, size: ${(file.size / 1024).toFixed(2)}KB`
         );
