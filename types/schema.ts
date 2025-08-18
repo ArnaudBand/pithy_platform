@@ -164,9 +164,9 @@ export type Funding = {
   title?: string;
   donor?: string;
   eligibre_countries?: string;
-  focus_earlier?: string;
+  focus_earlier?: string[];
   grant_size?: string;
-  funding_type?: string;
+  funding_type?: string[];
   closing_date?: string;
   reference_link?: string;
 };
