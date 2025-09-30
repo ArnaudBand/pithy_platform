@@ -145,16 +145,6 @@ const Pricing = () => {
             </p>
           </div>
         </Card>
-
-        {/* Money back guarantee badge */}
-        <div className="flex justify-center mt-8 animate-in fade-in duration-700 delay-300">
-          <div className="flex items-center gap-2 px-6 py-3 bg-white border border-gray-200 rounded-full shadow-md">
-            <svg className="w-5 h-5 text-[#5AC35A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-gray-700 text-sm font-semibold">30-day money-back guarantee</span>
-          </div>
-        </div>
       </div>
     </div>
   );
