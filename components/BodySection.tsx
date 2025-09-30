@@ -10,23 +10,23 @@ const BodySection = () => {
   const router = useRouter();
 
   return (
-    <div className="relative bg-black overflow-hidden min-h-screen flex items-center justify-between lg:flex-row lg:justify-between">
+    <div className="relative bg-black overflow-hidden h-screen flex items-center justify-between lg:flex-row lg:justify-between py-8">
       {/* Background effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#5AC35A]/5 via-transparent to-emerald-900/5 pointer-events-none"></div>
-      
+
       <div className="relative w-full px-6 lg:px-10 py-20">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-          
+
           {/* Left Section - Content */}
           <div className="space-y-12">
             <Header_description />
-            
+
             {/* Feature Buttons - Below description */}
             <div className="space-y-4">
               <p className="text-white/60 text-sm font-medium tracking-wide uppercase">
                 Explore Opportunities
               </p>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {/* Jobs Button */}
                 <Button
@@ -91,14 +91,14 @@ const BodySection = () => {
             <div className="relative group">
               {/* Ambient glow */}
               <div className="absolute -inset-12 bg-gradient-to-r from-[#5AC35A]/20 via-emerald-400/20 to-[#5AC35A]/20 rounded-full blur-3xl opacity-50 group-hover:opacity-70 transition-opacity duration-700 animate-pulse"></div>
-              
+
               {/* Image container */}
               <div className="relative transform group-hover:scale-105 transition-transform duration-500 hidden lg:block">
                 <CardImage />
               </div>
             </div>
           </div>
-          
+
         </div>
       </div>
     </div>
