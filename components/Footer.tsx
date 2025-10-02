@@ -4,6 +4,7 @@ import SocialMediaLinks from "./SocialMediaLinks";
 import ContactInfo from "./ContactInfo";
 import QuickLinks from "./QuickLinks";
 import Logo from "./Logo";
+import LiquidEther from "./LiquidEther";
 import { useState } from "react";
 
 const Footer = () => {
@@ -14,8 +15,31 @@ const Footer = () => {
   const displayText = isHovered ? text : text.slice(0, 50) + "...";
 
   return (
-    <div className="bg-black w-full">
-      <div className="flex flex-col space-y-2">
+    <div className="relative bg-black w-full overflow-hidden">
+      {/* LiquidEther Background */}
+      <div className="absolute inset-0 z-0">
+        <LiquidEther
+          colors={['#0AF41D', '#529652', '#20CC6B']}
+          mouseForce={100}
+          cursorSize={180}
+          isViscous={true}
+          viscous={20}
+          resolution={0.7}
+          autoDemo={true}
+          autoSpeed={0.8}
+          autoIntensity={3.0}
+          takeoverDuration={0.25}
+          autoResumeDelay={1000}
+          autoRampDuration={0.9}
+          className="w-full h-full"
+        />
+      </div>
+
+      {/* Dark overlay for readability */}
+      <div className="absolute inset-0 bg-black/75 z-[1]"></div>
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-col space-y-2">
         <div className="flex flex-col md:flex-row h-auto md:h-96 w-full lg:flex-row">
           <div
             className="flex-1 bg-contain bg-no-repeat bg-left-bottom flex items-center justify-center text-white"

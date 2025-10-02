@@ -15,22 +15,19 @@ const BodySection = () => {
       {/* LiquidEther Background */}
       <div className="absolute inset-0 z-0">
         <LiquidEther
-          colors={['#0AF41DFF', '#529652FF', '#20CC6BFF']}
-          cursorColorControl={true}
-          mouseForce={20}
-          cursorSize={100}
-          isViscous={false}
-          viscous={30}
-          iterationsViscous={32}
-          iterationsPoisson={32}
-          resolution={0.5}
-          isBounce={false}
+          colors={['#0AF41D', '#529652', '#20CC6B']}
+          mouseForce={100}
+          cursorSize={180}
+          isViscous={true}
+          viscous={20}
+          resolution={0.7}
           autoDemo={true}
-          autoSpeed={0.5}
-          autoIntensity={2.2}
+          autoSpeed={0.8}
+          autoIntensity={3.0}
           takeoverDuration={0.25}
-          autoResumeDelay={3000}
-          autoRampDuration={0.6}
+          autoResumeDelay={1000}
+          autoRampDuration={0.9}
+          className="w-full h-full"
         />
       </div>
 
@@ -48,7 +45,7 @@ const BodySection = () => {
             <Header_description />
 
             {/* Feature Buttons - Below description */}
-            <div className="space-y-4">
+            <div className="space-y-8">
               <p className="text-white/60 text-sm font-medium tracking-wide uppercase">
                 Explore Opportunities
               </p>

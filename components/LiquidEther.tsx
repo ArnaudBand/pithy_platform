@@ -23,7 +23,6 @@ export interface LiquidEtherProps {
   takeoverDuration?: number;
   autoResumeDelay?: number;
   autoRampDuration?: number;
-  cursorColorControl?: boolean; // New prop
 }
 
 interface SimOptions {
@@ -55,7 +54,7 @@ interface LiquidEtherWebGL {
   dispose: () => void;
 }
 
-const defaultColors = ['#0AF41DFF', '#529652FF', '#20CC6BFF'];
+const defaultColors = ['#39FF27FF', '#5BFFD0FF', '#00FFE5FF'];
 
 export default function LiquidEther({
   mouseForce = 20,
@@ -76,8 +75,7 @@ export default function LiquidEther({
   autoIntensity = 2.2,
   takeoverDuration = 0.25,
   autoResumeDelay = 1000,
-  autoRampDuration = 0.6,
-  cursorColorControl = true
+  autoRampDuration = 0.6
 }: LiquidEtherProps): React.ReactElement {
   const mountRef = useRef<HTMLDivElement | null>(null);
   const webglRef = useRef<LiquidEtherWebGL | null>(null);
@@ -114,42 +112,6 @@ export default function LiquidEther({
       tex.generateMipmaps = false;
       tex.needsUpdate = true;
       return tex;
-    }
-    // Function to update palette based on cursor position
-    function updatePaletteFromCursor(x: number, y: number, tex: THREE.DataTexture) {
-      // Normalize cursor position to 0-1
-      const nx = (x + 1) / 2; // Convert from -1,1 to 0,1
-      const ny = (y + 1) / 2;
-
-      // Create color based on cursor position
-      const hue = nx * 360; // Horizontal position controls hue
-      const saturation = 0.7 + ny * 0.3; // Vertical position affects saturation
-      const lightness = 0.5 + ny * 0.2; // Vertical position affects lightness
-
-      const color1 = new THREE.Color().setHSL(hue / 360, saturation, lightness);
-      const color2 = new THREE.Color().setHSL((hue + 60) / 360, saturation, lightness);
-      const color3 = new THREE.Color().setHSL((hue + 120) / 360, saturation, lightness);
-
-      const data = tex.image.data;
-
-      // Update first color
-      data[0] = Math.round(color1.r * 255);
-      data[1] = Math.round(color1.g * 255);
-      data[2] = Math.round(color1.b * 255);
-
-      // Update second color
-      data[4] = Math.round(color2.r * 255);
-      data[5] = Math.round(color2.g * 255);
-      data[6] = Math.round(color2.b * 255);
-
-      // Update third color if exists
-      if (data.length >= 12) {
-        data[8] = Math.round(color3.r * 255);
-        data[9] = Math.round(color3.g * 255);
-        data[10] = Math.round(color3.b * 255);
-      }
-
-      tex.needsUpdate = true;
     }
 
     const paletteTex = makePaletteTexture(colors);
@@ -220,7 +182,6 @@ export default function LiquidEther({
       takeoverFrom = new THREE.Vector2();
       takeoverTo = new THREE.Vector2();
       onInteract: (() => void) | null = null;
-      onPositionChange: ((x: number, y: number) => void) | null = null;
       private _onMouseMove = this.onDocumentMouseMove.bind(this);
       private _onTouchStart = this.onDocumentTouchStart.bind(this);
       private _onTouchMove = this.onDocumentTouchMove.bind(this);
@@ -254,11 +215,6 @@ export default function LiquidEther({
         const ny = (y - rect.top) / rect.height;
         this.coords.set(nx * 2 - 1, -(ny * 2 - 1));
         this.mouseMoved = true;
-
-        if (this.onPositionChange) {
-          this.onPositionChange(this.coords.x, this.coords.y);
-        }
-
         this.timer = window.setTimeout(() => {
           this.mouseMoved = false;
         }, 100);
@@ -266,11 +222,6 @@ export default function LiquidEther({
       setNormalized(nx: number, ny: number) {
         this.coords.set(nx, ny);
         this.mouseMoved = true;
-
-        if (this.onPositionChange) {
-          this.onPositionChange(nx, ny);
-        }
-
       }
       onDocumentMouseMove(event: MouseEvent) {
         if (this.onInteract) this.onInteract();
@@ -334,13 +285,6 @@ export default function LiquidEther({
       }
     }
     const Mouse = new MouseClass();
-
-    // Set up cursor color control callback
-    if (cursorColorControl) {
-      Mouse.onPositionChange = (x: number, y: number) => {
-        updatePaletteFromCursor(x, y, paletteTex);
-      };
-    }
 
     class AutoDriver {
       mouse: MouseClass;
@@ -1224,8 +1168,7 @@ export default function LiquidEther({
     autoIntensity,
     takeoverDuration,
     autoResumeDelay,
-    autoRampDuration,
-    cursorColorControl
+    autoRampDuration
   ]);
 
   useEffect(() => {
@@ -1273,8 +1216,7 @@ export default function LiquidEther({
     autoIntensity,
     takeoverDuration,
     autoResumeDelay,
-    autoRampDuration,
-    cursorColorControl
+    autoRampDuration
   ]);
 
   return (
