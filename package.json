@@ -43,6 +43,7 @@
     "dayjs": "^1.11.13",
     "flutterwave-node-v3": "^1.1.12",
     "framer-motion": "^11.18.2",
+    "gsap": "^3.13.0",
     "immer": "^10.1.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.441.0",
