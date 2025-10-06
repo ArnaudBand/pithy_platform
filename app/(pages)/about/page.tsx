@@ -1,7 +1,6 @@
-// import OurImpact from "@/components/OurImpact";
 import OurStory from "@/components/OurStory";
-// import Partnerships from "@/components/Partnerships";
 import Footer from "@/components/Footer";
+import LiquidEther from "@/components/LiquidEther";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -36,16 +35,31 @@ export default function AboutPage() {
     <div className="flex flex-col items-center w-full">
       {/* Modern Hero Section */}
       <div className="relative w-full min-h-[75vh] bg-gradient-to-br from-gray-900 via-black to-gray-900 overflow-hidden">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-[#5AC35A] rounded-full mix-blend-multiply filter blur-3xl"></div>
-          <div className="absolute top-40 right-10 w-72 h-72 bg-[#00AE76] rounded-full mix-blend-multiply filter blur-3xl"></div>
-          <div className="absolute bottom-20 left-1/2 w-72 h-72 bg-green-500 rounded-full mix-blend-multiply filter blur-3xl"></div>
+        {/* LiquidEther Background */}
+        <div className="absolute inset-0 z-0">
+          <LiquidEther
+            colors={['#0AF41D', '#529652', '#20CC6B']}
+            mouseForce={100}
+            cursorSize={180}
+            isViscous={true}
+            viscous={20}
+            resolution={0.7}
+            autoDemo={true}
+            autoSpeed={0.6}
+            autoIntensity={2.5}
+            takeoverDuration={0.25}
+            autoResumeDelay={1000}
+            autoRampDuration={0.9}
+            className="w-full h-full"
+          />
         </div>
 
+        {/* Dark overlay for readability */}
+        <div className="absolute inset-0 bg-black/70 z-[1]"></div>
+
         {/* Grid Pattern Overlay */}
-        <div 
-          className="absolute inset-0 opacity-50"
+        <div
+          className="absolute inset-0 opacity-30 z-[2]"
           style={{
             backgroundImage: `linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px)`,
             backgroundSize: '64px 64px'
@@ -132,8 +146,6 @@ export default function AboutPage() {
       <div id="our-story" className="w-full">
         <OurStory />
       </div>
-      {/* <Partnerships />
-      <OurImpact /> */}
       <Footer />
     </div>
   );
