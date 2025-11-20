@@ -10,7 +10,7 @@
 export default function Home() {
   return (
     <div className="overflow-x-hidden">
-      <p>Home Page</p>
+      <p className="text-white text-center">Home Page</p>
     </div>
   );
 }
