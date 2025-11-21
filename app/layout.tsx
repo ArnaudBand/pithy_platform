@@ -1,7 +1,7 @@
 import localFont from "next/font/local";
 import "./globals.css";
-// import ConditionalLayout from "@/components/ConditionalLayout";
-// import { UserProvider } from "@/context/UserContext";
+import ConditionalLayout from "@/components/ConditionalLayout";
+import { UserProvider } from "@/context/UserContext";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import PWAInstallPromotion from "@/components/PWAInstallPromotion";
@@ -329,7 +329,7 @@ export const createPageMetadata = ({
 };
 
 export default function RootLayout({
-  // children,
+  children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
@@ -359,9 +359,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}
       >
-        {/* <UserProvider>
+        <UserProvider>
           <ConditionalLayout>{children}</ConditionalLayout>
-        </UserProvider> */}
+        </UserProvider>
         <PWAInstallPromotion />
         <Analytics />
         <SpeedInsights />
