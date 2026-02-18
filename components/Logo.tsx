@@ -10,9 +10,9 @@ const Logo = () => {
         alt="Logo"
         width={32}
         height={32}
-        className="w-8 h-8"
+        className="w-10 h-10"
       />
-      <span className="text-xl font-bold ml-2">Pithy Means</span>
+      <span className="text-xl font-bold ml-2 text-white italic">Pithy Means</span>
     </Link>
   );
 };

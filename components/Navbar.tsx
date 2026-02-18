@@ -60,9 +60,9 @@ const Navbar = () => {
 
   const navLinks = [
     { href: "/", label: "Home" },
-    { href: "/about", label: "About" },
-    { href: "/how-it-works", label: "How It Works" },
-    { href: "/contact", label: "Contact" },
+    { href: "/human-services/about", label: "About" },
+    { href: "/human-services/how-it-works", label: "How It Works" },
+    { href: "/human-services/contact", label: "Contact" },
   ];
 
   return (

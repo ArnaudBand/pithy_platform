@@ -9,7 +9,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import MapChart from "./MapChart";
+// import MapChart from "./MapChart";
 
 const userLocationData = [
   { location: "New York", users: 1200 },
@@ -51,7 +51,7 @@ const UserGraphs = () => {
         <div className="bg-white p-6 rounded-lg shadow-sm">
           <ResponsiveContainer width="100%" height={400}>
             <div className="text-center text-gray-500">
-              <MapChart />
+              {/* <MapChart /> */}
             </div>
           </ResponsiveContainer>
         </div>
