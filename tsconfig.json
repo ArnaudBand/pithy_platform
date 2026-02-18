@@ -42,7 +42,7 @@
     ".next/types/**/*.ts",
     "app/(api)/api/upload-files",
     "build/types/**/*.ts"
-  ],
+, "app/human-services/(auth)/create-profile/page.jsx"  ],
   "exclude": [
     "node_modules",
     ".next"

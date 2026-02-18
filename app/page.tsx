@@ -214,7 +214,7 @@ export default function Home() {
                             <Image src="/assets/logo.png" alt="Pithy Means Africa logo" width={18} height={18} style={{ display: "block" }} />
                         </div>
                         <div>
-                            <div style={{ fontFamily: "'Google Sans Code', monospace", color: "#ebf5e8", fontSize: 15, fontWeight: 400, letterSpacing: "0.05em" }}>Pithy Means Africa</div>
+                            <div style={{ fontFamily: "'Google Sans Code', monospace", color: "#ebf5e8", fontSize: 15, fontWeight: 400, letterSpacing: "0.05em" }}>Pithy means Africa</div>
                             <div style={{ fontFamily: "'Google Sans Code', monospace", color: "#90c87e", fontSize: 10, letterSpacing: "0.28em", textTransform: "uppercase", marginTop: 1 }}>Est. 2024</div>
                         </div>
                     </div>
