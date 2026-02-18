@@ -1,294 +1,335 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import InputContact from "@/components/InputContact";
-import { AuthState, LoginInfo } from "@/types/schema";
-import Image from "next/image";
-import Link from "next/link";
-import useAuth from "@/lib/hooks/useAuth";
 import { Button } from "./ui/button";
-import { MoveLeft } from "lucide-react";
-import { useAuthStore } from "@/lib/store/useAuthStore";
+import { MoveLeft, Eye, EyeOff } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
+import { userLoginSchema, UserLogin } from "@/lib/validations/auth-schema";
 import { z } from "zod";
 
-const MAX_ATTEMPTS = 5;
-
-// Create a Zod schema for login validation
-const loginSchema = z.object({
-  email: z.string()
-    .min(3, { message: "Email is required" })
-    .email({ message: "Please enter a valid email address" }),
-  password: z.string()
-    .min(3, { message: "Password is required" })
-    .min(8, { message: "Password must be at least 8 characters" })
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
-
-const SignInForm = () => {
-  const [formdata, setFormdata] = useState<Partial<LoginInfo>>({
+// Make sure this is the DEFAULT export
+const SignInLoginForm = () => {
+  const [formData, setFormData] = useState<UserLogin>({
     email: "",
     password: "",
   });
-  const [loading, setLoading] = useState<boolean>(false);
-  const [attempts, setAttempts] = useState<number>(0);
-  const [errors, setErrors] = useState<Partial<Record<keyof LoginFormData, string>>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-  const setUser = useAuth((state) => state.setUser);
-  const { signin } = useAuthStore((state) => state as AuthState);
   const router = useRouter();
 
-  // Load saved attempts on component mount
+  // Add component mount logging
   useEffect(() => {
-    const savedAttempts = localStorage.getItem("loginAttempts");
-    if (savedAttempts) {
-      setAttempts(parseInt(savedAttempts));
-    }
+    console.log("🎯 SignInLoginForm component mounted");
+    console.log("📍 Current URL:", window.location.href);
   }, []);
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormdata((prev) => ({ ...prev, [name]: value }));
-    
-    // Clear error for this field when the user types
-    if (errors[name as keyof LoginFormData]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
+    console.log(`✏️ Input changed: ${name} = ${value}`);
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    if (formErrors[name]) {
+      setFormErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
   };
 
-  const validateForm = (): boolean => {
+  const checkUserProfile = async (userId: string, token: string): Promise<boolean> => {
+    console.log("🔍 Starting profile check for user:", userId);
+
     try {
-      loginSchema.parse(formdata);
-      setErrors({});
-      return true;
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const newErrors: Partial<Record<keyof LoginFormData, string>> = {};
-        error.errors.forEach((err) => {
-          const path = err.path[0] as keyof LoginFormData;
-          newErrors[path] = err.message;
-        });
-        setErrors(newErrors);
+      const url = `http://localhost:8080/api/profiles/${userId}`;
+      console.log("📡 Fetching profile from:", url);
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log("📊 Profile check response status:", response.status);
+
+      if (response.ok) {
+        const profileData = await response.json();
+        console.log("✅ Profile found:", profileData);
+        localStorage.setItem("profile", JSON.stringify(profileData));
+        return true;
       }
+
+      console.log("❌ No profile found (status:", response.status, ")");
+      return false;
+    } catch (error) {
+      console.error("❌ Error checking profile:", error);
       return false;
     }
   };
 
-  const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate form before submitting
-    if (!validateForm()) {
-      return;
+    console.log("🚀 ===== FORM SUBMISSION STARTED =====");
+    console.log("📝 Form data:", formData);
+
+    setFormErrors({});
+
+    // Validate form
+    try {
+      console.log("🔍 Validating form data...");
+      userLoginSchema.parse(formData);
+      console.log("✅ Form validation passed");
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        console.log("❌ Form validation failed:", error.errors);
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          const field = err.path[0];
+          newErrors[field as string] = err.message;
+        });
+        setFormErrors(newErrors);
+
+        const errorKeys = Object.keys(newErrors);
+        if (errorKeys.length > 0) {
+          toast.error(newErrors[errorKeys[0]]);
+        }
+        return;
+      }
     }
-    
-    setLoading(true);
+
+    console.log("⏳ Setting loading state to true");
+    setIsLoading(true);
 
     try {
-      const response = await signin(formdata as LoginInfo);
+      console.log("📤 Sending login request to backend...");
+      const response = await fetch("http://localhost:8080/api/users/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
 
-      if (response.success) {
-        // Reset attempts on successful login
-        setAttempts(0);
-        localStorage.removeItem("loginAttempts");
+      console.log("📥 Login response received. Status:", response.status);
+      const data = await response.json();
+      console.log("📦 Login response data:", data);
 
-        setUser(response.data?.user);
-        toast.success("Login successful! Redirecting to dashboard...");
-        router.push("/dashboard");
-      } else {
-        // Calculate next attempts count
-        const nextAttempts = attempts + 1;
-        setAttempts(nextAttempts);
-        localStorage.setItem("loginAttempts", nextAttempts.toString());
+      if (!response.ok) {
+        console.log("❌ Login request failed with status:", response.status);
 
-        // Check if attempts have reached the limit
-        if (nextAttempts >= MAX_ATTEMPTS) {
-          toast.promise(
-            new Promise<void>((resolve) => {
-              setTimeout(() => {
-                router.push("/forgot-password");
-                resolve();
-              }, 3000);
-            }),
-            {
-              loading:
-                "Maximum login attempts reached. Redirecting to password reset...",
-              success: "Redirecting...",
-              error: "An error occurred",
-            },
-          );
-        } else {
-          const remainingAttempts = MAX_ATTEMPTS - nextAttempts;
-          toast.error(
-            `${response.message ?? "Invalid credentials"}. ${remainingAttempts} attempt${remainingAttempts !== 1 ? "s" : ""} remaining.`,
-          );
+        if (response.status === 403 && data.message?.includes("verify your email")) {
+          console.log("📧 Email verification required");
+          toast.error("Please verify your email before logging in.");
+          setIsLoading(false);
+          setTimeout(() => {
+            router.push("/verify-email-pending");
+          }, 2000);
+          return;
         }
-      }
-    } catch (error) {
-      const nextAttempts = attempts + 1;
-      setAttempts(nextAttempts);
-      localStorage.setItem("loginAttempts", nextAttempts.toString());
 
-      if (nextAttempts >= MAX_ATTEMPTS) {
-        toast.promise(
-          new Promise<void>((resolve) => {
-            setTimeout(() => {
-              router.push("/forgot-password");
-              resolve();
-            }, 3000);
-          }),
-          {
-            loading:
-              "Maximum login attempts reached. Redirecting to password reset...",
-            success: "Redirecting...",
-            error: "An error occurred",
-          },
-        );
-      } else {
-        const remainingAttempts = MAX_ATTEMPTS - nextAttempts;
-        toast.error(
-          `An error occurred. Please try again. ${remainingAttempts} attempt${remainingAttempts !== 1 ? "s" : ""} remaining.`,
-        );
+        if (response.status === 429) {
+          console.log("⏱️ Rate limit exceeded");
+          toast.error(data.message || "Too many login attempts. Please try again later.");
+          setIsLoading(false);
+          return;
+        }
+
+        throw new Error(data.message || "Login failed");
       }
-    } finally {
-      setLoading(false);
+
+      console.log("✅ Login successful!");
+      console.log("💾 Storing authentication data...");
+
+      // Store token and user data
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify({
+        id: data.id,
+        email: data.email,
+      }));
+
+      console.log("✅ Token stored:", !!localStorage.getItem("token"));
+      console.log("✅ User stored:", localStorage.getItem("user"));
+
+      toast.success("Login successful!");
+
+      // Check if user has a profile
+      console.log("🔄 Checking if user has profile...");
+      const hasProfile = await checkUserProfile(data.id, data.token);
+      console.log("📋 Profile check result:", hasProfile ? "HAS PROFILE" : "NO PROFILE");
+
+      // CRITICAL: Set loading to false BEFORE redirecting
+      console.log("⏳ Setting loading state to false");
+      setIsLoading(false);
+
+      // Redirect based on profile status
+      const targetRoute = hasProfile ? "/dashboard" : "/create-profile";
+      console.log("🔀 Redirecting to:", targetRoute);
+
+      setTimeout(() => {
+        console.log("🚀 Executing router.replace to:", targetRoute);
+        router.replace(targetRoute);
+      }, 500);
+
+    } catch (error) {
+      console.error("❌ Login error caught:", error);
+      const errorMessage = error instanceof Error
+        ? error.message
+        : "Login failed. Please try again.";
+      toast.error(errorMessage);
+      setIsLoading(false);
+      console.log("⏳ Loading state set to false after error");
     }
+
+    console.log("🏁 ===== FORM SUBMISSION ENDED =====");
   };
 
+  console.log("🔄 Component rendering. isLoading:", isLoading);
+
+  if (isLoading) {
+    console.log("⏳ Rendering loading spinner");
+    return (
+      <div className="fixed inset-0 flex justify-center items-center bg-white backdrop-blur-sm z-50">
+        <div className="relative">
+          <div className="absolute inset-0 bg-green-500 rounded-full filter blur-md animate-pulse"></div>
+          <div className="relative z-10 w-24 h-24">
+            <div className="absolute inset-0 border-4 border-t-green-400 border-r-transparent border-b-green-200 border-l-transparent rounded-full animate-spin"></div>
+            <div className="absolute inset-2 border-4 border-t-transparent border-r-green-400 border-b-transparent border-l-green-200 rounded-full animate-spin"></div>
+            <div className="absolute inset-4 border-4 border-t-green-200 border-r-transparent border-b-green-400 border-l-transparent rounded-full animate-spin animation-delay-150"></div>
+          </div>
+          <p className="mt-8 text-green-400 font-medium tracking-wider animate-pulse text-center">
+            SIGNING IN<span className="animate-ping">...</span>
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  console.log("📄 Rendering login form");
+
   return (
-    <div className="flex items-center justify-center w-full">
-      <Toaster />
-      <div className="bg-gradient-to-r from-[#ffffff] via-green-300 to-green-100 p-8 rounded-lg shadow-lg w-full h-screen relative">
-        <Button
-          onClick={() => router.push("/")}
-          className="fixed md:top-8 left-8 bottom-4 bg-transparent text-black hover:text-green-500 hover:bg-white"
-        >
-          <MoveLeft size={24} className="mx-3" />
-          Go Back
-        </Button>
-        <div className="flex justify-center items-center mx-0 xl:mx-30  space-x-4 w-full md:flex-row flex-col">
-          <div className="flex flex-col w-full lg:w-2/4 px-0 mx-0 lg:px-10 lg:mx-auto">
-            <h2 className="text-xl lg:text-xl 2xl:text-2xl font-bold text-[#111111] mb-6 capitalize">
-              Welcome back
-            </h2>
-            <form className="space-y-6 flex flex-col" onSubmit={handleSignIn}>
-              <div className="flex flex-col gap-1">
-                <InputContact
-                  label="Email"
-                  type="email"
-                  name="email"
-                  className={`w-full text-xl ${errors.email ? 'border-red-500' : ''}`}
-                  value={formdata.email as string}
-                  onChange={handleChange}
-                />
-                {errors.email && (
-                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-                )}
-              </div>
-              
-              <div className="flex flex-col gap-1">
-                <div className="relative">
-                  <InputContact
-                    label="Password"
-                    type={"password"}
-                    className={`w-full text-xl ${errors.password ? 'border-red-500' : ''}`}
-                    name="password"
-                    value={formdata.password as string}
-                    onChange={handleChange}
-                  />
-                </div>  
-              </div>
+    <div className="w-full min-h-screen mx-auto p-4 sm:p-6 bg-white flex justify-center items-center flex-col relative">
+      <Button
+        onClick={() => {
+          console.log("🔙 Go Back button clicked");
+          router.push("/");
+        }}
+        className="absolute top-4 right-4 bg-transparent text-gray-800 hover:text-zinc-200 hover:bg-green-500"
+      >
+        <MoveLeft className="mr-2" />
+        Go Back
+      </Button>
 
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full text-xl py-2 px-4 bg-[#529c50] text-white font-semibold rounded-md hover:bg-[#67d476] transition duration-200"
-              >
-                {loading ? (
-                  <div className="flex items-center">
-                    <span>Signing in...</span>
-                    <svg
-                      className="animate-spin h-5 w-5 ml-2 text-white"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      ></circle>
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 11-8 8z"
-                      ></path>
-                    </svg>
-                  </div>
-                ) : (
-                  "Sign In"
-                )}
-              </Button>
-            </form>
+      <Toaster position="top-center" />
 
-            <div className="mt-2">
-              <Link
-                href="/forgot-password"
-                className="text-xl text-gray-800 hover:text-green-600 transition duration-200"
-              >
-                Forgot your password?
-              </Link>
-            </div>
+      <div className="w-full max-w-md space-y-6">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">
+            Welcome Back
+          </h1>
+          <p className="text-gray-600">
+            Sign in to your Pithy account
+          </p>
+        </div>
 
-            <div className="">
-              <li className="text-xl text-gray-800 list-none">
-                Don&apos;t have an account?
-                <Link
-                  href="/signUp"
-                  className="mx-1 hover:font-semibold transition duration-400"
-                >
-                  <span className="text-blue-800">Sign up</span>
-                </Link>
-              </li>
-            </div>
-
-            {attempts >= 3 && attempts < MAX_ATTEMPTS && (
-              <div className="mt-4 text-center">
-                <Link
-                  href="/reset-password"
-                  className="text-sm text-green-500 hover:text-green-700 transition duration-200"
-                >
-                  Too many attempts? Reset your password
-                </Link>
-              </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              Email Address
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className={`text-black w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${formErrors.email ? "border-red-500" : "border-gray-300"
+                }`}
+              placeholder="you@example.com"
+              required
+            />
+            {formErrors.email && (
+              <p className="mt-1 text-sm text-red-500">{formErrors.email}</p>
             )}
           </div>
 
-          <div className="w-full lg:w-2/4 p-10 md:mt-0 hidden md:flex justify-center glass-effect h-[calc(100vh-64px)] 2xl:h-[calc(100vh-64px)] border-2 border-[#92d192]">
-            <div className="relative w-full h-full">
-              <Image
-                src="/assets/sign.png"
-                alt="Sign In"
-                layout="fill"
-                objectFit="contain"
-                className="object-contain"
-              />
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <a
+                href="/forgot-password"
+                className="text-xs text-green-600 hover:underline"
+              >
+                Forgot password?
+              </a>
             </div>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className={`text-black w-full px-4 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 ${formErrors.password ? "border-red-500" : "border-gray-300"
+                  }`}
+                placeholder="••••••••"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  console.log("👁️ Toggle password visibility");
+                  setShowPassword(!showPassword);
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+            {formErrors.password && (
+              <p className="mt-1 text-sm text-red-500">{formErrors.password}</p>
+            )}
           </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            onClick={() => console.log("🖱️ Submit button clicked")}
+            className="w-full px-4 py-3 bg-gradient-to-r from-[#5AC35A] to-[#00AE76] text-white rounded-md font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? "Signing In..." : "Sign In"}
+          </button>
+
+          <div className="text-center">
+            <p className="text-sm text-gray-600">
+              Don't have an account?{" "}
+              <a
+                href="/signUp"
+                className="text-green-600 font-medium hover:underline"
+              >
+                Sign up
+              </a>
+            </p>
+          </div>
+        </form>
+
+        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+          <p className="text-sm text-blue-800">
+            📧 Haven't verified your email yet?{" "}
+            <a href="/verify-email-pending" className="font-medium underline">
+              Resend verification email
+            </a>
+          </p>
         </div>
       </div>
     </div>
   );
 };
 
-export default SignInForm;
+export default SignInLoginForm;
