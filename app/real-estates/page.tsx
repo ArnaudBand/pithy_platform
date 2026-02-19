@@ -25,7 +25,6 @@ type Opportunity = {
 const NAV: NavItem[] = [
     { label: "About", href: "#about" },
     { label: "Services", href: "#services" },
-    { label: "Opportunities", href: "#opportunities" },
     { label: "Why Us", href: "#why" },
     { label: "Team", href: "#team" },
     { label: "Contact", href: "#contact" },
@@ -450,8 +449,8 @@ export default function RealEstatePage() {
                         <Image
                             src="/assets/i1.png"
                             alt="Kampala skyline"
-                            width={200}
-                            height={400}
+                            width={150}
+                            height={200}
                             style={{ position: "absolute", bottom: 0, left: 0, width: "55%", height: "45%", objectFit: "cover", borderRadius: 2, filter: "brightness(0.75)", animationDelay: "1.5s" }}
                             className="float-el"
                         />
@@ -566,7 +565,7 @@ export default function RealEstatePage() {
           SUBMIT OPPORTUNITY  §5
       ══════════════════════════════ */}
 
-            <section id="submit" style={{ background: S.creamDark, padding: "120px 40px" }}>
+            <section id="submit" style={{ background: S.cream, padding: "120px 40px" }}>
                 <div style={{ maxWidth: 840, margin: "0 auto" }}>
                     <div style={{ textAlign: "center", marginBottom: 60 }}>
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 20 }}>
