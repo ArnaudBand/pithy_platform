@@ -793,17 +793,12 @@ export default function RealEstatePage() {
                                     {
                                         icon: "✉️",
                                         label: "Email",
-                                        value: "info@pithymeansplus.com"
+                                        value: "info@pithymeansplus.com, pithymeansafrica@gmail.com, pithymeans@gmail.com"
                                     },
                                     {
-                                        icon: "📧",
-                                        label: "Email Address",
-                                        value: "pithymeansafrica@gmail.com ",
-                                    },
-                                    {
-                                        icon: "📧",
-                                        label: "Email Us For",
-                                        value: "pithymeans@gmail.com"
+                                        icon: "✆",
+                                        label: "Phone",
+                                        value: "+256 772 289 692",
                                     }
                                 ].map((c) => (
                                     <div key={c.label} style={{ display: "flex", gap: 16, marginBottom: 24, paddingBottom: 24, borderBottom: "1px solid rgba(184,146,74,0.12)" }}>
