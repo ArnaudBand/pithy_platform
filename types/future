@@ -1,0 +1,54 @@
+            // <section id="opportunities" style={{ background: S.ink, padding: "120px 40px" }}>
+            //     <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+            //         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 72, flexWrap: "wrap", gap: 24 }}>
+            //             <div>
+            //                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
+            //                     <div style={{ width: 28, height: 1, background: S.gold }} />
+            //                     <span style={{ fontFamily: S.sans, fontSize: 10, fontWeight: 500, letterSpacing: "0.42em", textTransform: "uppercase", color: S.gold }}>Live Listings</span>
+            //                 </div>
+            //                 <h2 style={{ fontFamily: S.serif, fontSize: "clamp(36px,4.5vw,56px)", fontWeight: 300, color: "#f5f0e8", lineHeight: 1.08 }}>
+            //                     Investment<br /><em style={{ color: S.gold }}>Opportunities</em>
+            //                 </h2>
+            //             </div>
+            //             <p style={{ fontFamily: S.sans, fontSize: 14, lineHeight: 1.75, color: "rgba(245,240,232,0.45)", maxWidth: 340 }}>
+            //                 Where money meets projects. Every listing has passed our due-diligence process — legal, financial, and on-ground verification.
+            //             </p>
+            //         </div>
+
+            //         <div className="opp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 24 }}>
+            //             {OPPORTUNITIES.map((o, i) => (
+            //                 <div
+            //                     key={i}
+            //                     className="opp-card"
+            //                     style={{ border: "1px solid rgba(184,146,74,0.18)", background: "rgba(255,255,255,0.02)", padding: "36px 32px", position: "relative", overflow: "hidden" }}
+            //                 >
+            //                     {/* Top accent */}
+            //                     <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${S.gold}, transparent)` }} />
+
+            //                     <div style={{ fontFamily: S.sans, fontSize: 10, fontWeight: 500, letterSpacing: "0.3em", textTransform: "uppercase", color: S.gold, marginBottom: 16 }}>{o.sector}</div>
+            //                     <p style={{ fontFamily: S.sans, fontSize: 14, lineHeight: 1.7, color: "rgba(245,240,232,0.6)", marginBottom: 32 }}>{o.summary}</p>
+
+            //                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, borderTop: "1px solid rgba(184,146,74,0.12)", paddingTop: 24 }}>
+            //                         {[
+            //                             { k: "Country", v: o.country },
+            //                             { k: "Capital", v: o.capital },
+            //                             { k: "Stage", v: o.stage },
+            //                             { k: "Return Period", v: o.returnPeriod },
+            //                         ].map((row) => (
+            //                             <div key={row.k}>
+            //                                 <div style={{ fontFamily: S.sans, fontSize: 9, letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(184,146,74,0.55)", marginBottom: 4 }}>{row.k}</div>
+            //                                 <div style={{ fontFamily: S.serif, fontSize: 15, color: "#f5f0e8", fontStyle: "italic" }}>{row.v}</div>
+            //                             </div>
+            //                         ))}
+            //                     </div>
+
+            //                     <div style={{ marginTop: 28 }}>
+            //                         <a href="#contact" className="btn-outline" style={{ display: "inline-block", fontSize: 10, padding: "11px 24px", borderColor: "rgba(184,146,74,0.4)", color: S.gold }}>
+            //                             Express Interest
+            //                         </a>
+            //                     </div>
+            //                 </div>
+            //             ))}
+            //         </div>
+            //     </div>
+            // </section>

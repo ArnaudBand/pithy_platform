@@ -214,7 +214,7 @@ export default function Home() {
                             <Image src="/assets/logo.png" alt="Pithy Means Africa logo" width={18} height={18} style={{ display: "block" }} />
                         </div>
                         <div>
-                            <div style={{ fontFamily: "'Google Sans Code', monospace", color: "#ebf5e8", fontSize: 15, fontWeight: 400, letterSpacing: "0.05em" }}>Pithy means Africa</div>
+                            <div style={{ fontFamily: "'Google Sans Code', monospace", color: "#ebf5e8", fontSize: 15, fontWeight: 400, letterSpacing: "0.05em" }}>Pithy Means Africa</div>
                             <div style={{ fontFamily: "'Google Sans Code', monospace", color: "#90c87e", fontSize: 10, letterSpacing: "0.28em", textTransform: "uppercase", marginTop: 1 }}>Est. 2024</div>
                         </div>
                     </div>
@@ -243,7 +243,7 @@ export default function Home() {
                         }}
                     >
                         {/* Photo */}
-                        <img
+                        <Image
                             src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1400&q=85&auto=format&fit=crop"
                             alt="Luxury real estate"
                             style={{
@@ -284,7 +284,7 @@ export default function Home() {
                                 Real<br />Estate
                             </h2>
                             <p style={{ fontSize: "clamp(13px,1.1vw,15px)", lineHeight: 1.7, color: "rgba(237, 245, 232, 0.52)", maxWidth: 300, marginBottom: 32 }}>
-                                Premium properties and investment opportunities across Africa's finest locations.
+                                Premium properties and investment opportunities across Africa&apos;s finest locations.
                             </p>
                             <div style={{ display: "inline-flex", alignItems: "center", gap: 12 }}>
                                 <span className="cta-line" style={{ display: "block", width: 36, height: 0, borderTop: "1px solid rgba(200,169,126,0.4)" }} />
@@ -332,7 +332,7 @@ export default function Home() {
                         }}
                     >
                         {/* Photo */}
-                        <img
+                        <Image
                             src="https://images.unsplash.com/photo-1531545514256-b1400bc00f31?w=1400&q=85&auto=format&fit=crop"
                             alt="Community human services"
                             style={{
