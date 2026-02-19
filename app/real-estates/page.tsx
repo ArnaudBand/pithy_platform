@@ -440,7 +440,7 @@ export default function RealEstatePage() {
                     {/* RIGHT — image mosaic */}
                     <div className="hero-img-col" style={{ position: "relative", height: 560 }}>
                         <Image
-                            src="https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=700&q=80&auto=format&fit=crop"
+                            src="/assets/h2.jpg"
                             alt="African real estate"
                             width={400}
                             height={500}
@@ -448,7 +448,7 @@ export default function RealEstatePage() {
                             style={{ position: "absolute", top: 0, right: 0, width: "80%", height: "65%", objectFit: "cover", borderRadius: 2, filter: "brightness(0.82)" }}
                         />
                         <Image
-                            src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=500&q=80&auto=format&fit=crop"
+                            src="/assets/i.png"
                             alt="Kampala skyline"
                             width={200}
                             height={400}
@@ -507,7 +507,7 @@ export default function RealEstatePage() {
 
                         <div style={{ position: "relative" }}>
                             <Image
-                                src="https://images.unsplash.com/photo-1675756261486-09bd1e0f6c8a?q=80&w=2832&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=800&q=80&auto=format&fit=crop"
+                                src="/assets/ou1.jpg"
                                 alt="Kampala Uganda"
                                 width={300}
                                 height={200}

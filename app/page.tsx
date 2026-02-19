@@ -244,7 +244,7 @@ export default function Home() {
                     >
                         {/* Photo */}
                         <Image
-                            src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1400&q=85&auto=format&fit=crop"
+                            src="/assets/hotel.jpg"
                             alt="Luxury real estate"
                             style={{
                                 position: "absolute", inset: 0,
@@ -333,7 +333,7 @@ export default function Home() {
                     >
                         {/* Photo */}
                         <Image
-                            src="https://images.unsplash.com/photo-1531545514256-b1400bc00f31?w=1400&q=85&auto=format&fit=crop"
+                            src="/assets/h1.jpg"
                             alt="Community human services"
                             style={{
                                 position: "absolute", inset: 0,

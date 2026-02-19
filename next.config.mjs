@@ -1,21 +1,16 @@
 import { fileURLToPath } from "url";
 import { dirname, resolve } from "path";
-import withPWA from "next-pwa";
+// import withPWA from "next-pwa";
 
-// Resolve __filename and __dirname in ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
-  outputFileTracing: true,
   reactStrictMode: false,
-  swcMinify: true,
   compiler: {
     removeConsole: process.env.NODE_ENV === "development",
   },
-  // Webpack Configuration
   webpack: (config) => {
     config.cache = {
       type: "filesystem",
@@ -26,7 +21,6 @@ const nextConfig = {
     };
     return config;
   },
-  // Cache-Control Headers
   async headers() {
     return [
       {
@@ -53,24 +47,15 @@ const nextConfig = {
   experimental: {
     typedRoutes: true,
     serverActions: {
-      bodySizeLimit: '50mb',
+      bodySizeLimit: "50mb",
     },
   },
-};
-
-// Configure PWA with improved settings
-const withPWAConfig = withPWA({
-  dest: 'public',
-  register: true,
-  skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development',
-  buildExcludes: [/middleware-manifest\.json$/],
-  maximumFileSizeToCacheInBytes: 5000000,
-  fallbacks: {
-    // Fallbacks help the PWA be more reliable
-    document: '/offline', // Fallback HTML document
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+    ],
   },
-});
-
-// Export the configuration with PWA enabled
-export default withPWAConfig(nextConfig);
+};
