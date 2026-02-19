@@ -60,25 +60,30 @@ export default function EditProfilePage() {
       // Format category-specific data based on selected category
       if (formData.categories) {
         if (formData.categories === "student") {
-          education_level: formData.education_level as string;
-          institution_name: formData.institution_name;
-          major_subject: formData.major_subject;
-          expected_graduation_year: Number(formData.expected_graduation_year);
+          dataToSubmit.education_level = formData.education_level as string;
+          dataToSubmit.institution_name = formData.institution_name;
+          dataToSubmit.major_subject = formData.major_subject;
+          dataToSubmit.expected_graduation_year = Number(
+            formData.expected_graduation_year
+          );
         }
 
         if (formData.categories === "job seeker") {
-          desired_job_title: formData.desired_job_title;
-          skills: formData.skills;
-          years_of_work_experience: Number(formData.years_of_work_experience);
-          resume_link: formData.resume_link;
-          availability_status: formData.availability_status as string;
+          dataToSubmit.desired_job_title = formData.desired_job_title;
+          dataToSubmit.skills = formData.skills;
+          dataToSubmit.years_of_work_experience = Number(
+            formData.years_of_work_experience
+          );
+          dataToSubmit.resume_link = formData.resume_link;
+          dataToSubmit.availability_status =
+            formData.availability_status as string;
         }
         if (formData.categories === "employer") {
-          company_name: formData.company_name;
-          company_size: formData.company_size as string;
-          industry_type: formData.industry_type;
-          position_in_company: formData.position_in_company;
-          url: formData.url;
+          dataToSubmit.company_name = formData.company_name;
+          dataToSubmit.company_size = formData.company_size as string;
+          dataToSubmit.industry_type = formData.industry_type;
+          dataToSubmit.position_in_company = formData.position_in_company;
+          dataToSubmit.url =   formData.url;
         }
       }
 

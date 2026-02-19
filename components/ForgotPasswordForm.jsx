@@ -24,6 +24,7 @@ const ForgotPasswordForm = () => {
         try {
             emailSchema.parse({ email });
         } catch (error) {
+            console.error("Validation error:", error);
             if (error instanceof z.ZodError) {
                 toast.error(error.errors[0].message);
                 return;
@@ -40,7 +41,7 @@ const ForgotPasswordForm = () => {
                 }
             );
 
-            const data = await response.json();
+            await response.json();
 
             // Always show success message for security (don't reveal if email exists)
             setEmailSent(true);

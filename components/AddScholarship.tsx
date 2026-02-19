@@ -107,6 +107,7 @@ const AddScholarship = () => {
       setShowForm(false);
       setTimeout(() => setMessage({ type: null, text: null }), 3000);
     } catch (error) {
+      console.error("Error adding scholarship:", error);
       setMessage({
         type: "error",
         text: "Failed to add scholarship. Please try again.",
@@ -179,6 +180,7 @@ const AddScholarship = () => {
       fetchScholarships();
       setTimeout(() => setMessage({ type: null, text: null }), 3000);
     } catch (error) {
+      console.error("Error deleting scholarship:", error);
       setMessage({
         type: "error",
         text: "Failed to delete scholarship. Please try again.",
@@ -197,6 +199,7 @@ const AddScholarship = () => {
         day: "numeric",
       });
     } catch (error) {
+      console.error("Error formatting date:", error);
       return dateString;
     }
   };

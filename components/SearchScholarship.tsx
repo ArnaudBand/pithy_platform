@@ -87,6 +87,7 @@ const SearchScholarship = ({ onSearchResults, setLoading, setError }: SearchScho
       onSearchResults(results.documents || []);
       setLoading(false);
     } catch (err) {
+      console.error("Error searching scholarships:", err);
       setError("Search failed. Please try again.");
       setLoading(false);
     }
@@ -108,6 +109,7 @@ const SearchScholarship = ({ onSearchResults, setLoading, setError }: SearchScho
         onSearchResults(results.documents || []);
         setLoading(false);
       } catch (err) {
+        console.error("Error resetting search:", err);
         setError("Failed to reset search. Please try again.");
         setLoading(false);
       }

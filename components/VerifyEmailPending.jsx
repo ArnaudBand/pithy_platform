@@ -1,14 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Button } from "./ui/button";
 import { Mail, RefreshCw } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 
 const VerifyEmailPending = ({ email }) => {
     const [isResending, setIsResending] = useState(false);
-    const router = useRouter();
 
     const handleResendEmail = async () => {
         if (!email) {

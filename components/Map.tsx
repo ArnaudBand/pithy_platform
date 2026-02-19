@@ -1,11 +1,12 @@
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import markerShadow from "leaflet/dist/images/marker-shadow.png"
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
 // Custom green marker to match your brand colors
 const customIcon = new L.Icon({
   iconUrl: "https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png",
-  shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
+  shadowUrl: markerShadow.src,
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
