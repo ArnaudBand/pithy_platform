@@ -20,6 +20,7 @@ const ScholarshipList = () => {
         setResultsCount(fetchedScholarships.documents?.length || 0);
         setLoading(false);
       } catch (err) {
+        console.error("Error fetching scholarships:", err);
         setError("Failed to load scholarships. Please try again.");
         setLoading(false);
       }

@@ -29,6 +29,7 @@ const CourseDetail = () => {
             setError("Course not found");
           }
         } catch (error) {
+          console.error("Error fetching course details:", error);
           setError("Error fetching course details");
         }
       };

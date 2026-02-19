@@ -1,7 +1,10 @@
+// app/real-estate/page.tsx
+
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
+import { useState, useEffect } from "react";
 
 /* ─────────────────────────────────────
    TYPES
@@ -75,7 +78,7 @@ const SERVICES = [
 
 const WHY = [
     { title: "Verified Opportunities", body: "Every project passes legal, financial, and on-ground verification before being listed." },
-    { title: "Trusted Local Expertise", body: "Over 20 years of infrastructure and market experience across African countries." },
+    { title: "Trusted Local Expertise", body: "Over 20 years of infrastructure and market experience across African countries ." },
     { title: "Africa-Wide Access", body: "Starting in Uganda, expanding East Africa and beyond — one platform for the continent." },
     { title: "Diaspora-Ready", body: "Secure remote investing with verified projects, full documentation, and dedicated support." },
     { title: "Risk Management", body: "Diversification, strong legal structures, and active monitoring on every active project." },
@@ -103,7 +106,7 @@ const TEAM = [
 export default function RealEstatePage() {
     const [menuOpen, setMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
-    const [oppForm, setOppForm] = useState({ sector: "", country: "", capital: "", summary: "", docs: "" });
+    const [oppForm, setOppForm] = useState({ sector: "", country: "", email: "", capital: "", summary: "", docs: "" });
     const [contactForm, setContactForm] = useState({ name: "", email: "", type: "investor", message: "" });
     const [submitted, setSubmitted] = useState<"opp" | "contact" | null>(null);
 
@@ -113,15 +116,48 @@ export default function RealEstatePage() {
         return () => window.removeEventListener("scroll", onScroll);
     }, []);
 
-    const handleOppSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setSubmitted("opp");
-        setTimeout(() => setSubmitted(null), 4000);
+    const handleOppSubmit = async () => {
+        const fileInput = document.querySelector('#opp-file-input') as HTMLInputElement;
+
+        const formData = new FormData();
+        formData.append("email", oppForm.email);
+        formData.append("sector", oppForm.sector);
+        formData.append("country", oppForm.country);
+        formData.append("capital", oppForm.capital);
+        formData.append("summary", oppForm.summary);
+        if (fileInput?.files?.[0]) formData.append("file", fileInput.files[0]);
+
+        const res = await fetch("/api/submit-opportunity", {
+            method: "POST",
+            body: formData,
+        });
+        console.log("Opportunity submission response:", res);
+        if (res.ok) {
+            setSubmitted("opp");
+            setOppForm({ sector: "", country: "", email: "", capital: "", summary: "", docs: "" });
+            setTimeout(() => setSubmitted(null), 4000);
+        }
     };
+
     const handleContactSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        setSubmitted("contact");
-        setTimeout(() => setSubmitted(null), 4000);
+        
+        const formInfo = new FormData();
+        formInfo.append("name", contactForm.name);
+        formInfo.append("email", contactForm.email);
+        formInfo.append("type", contactForm.type);
+        formInfo.append("message", contactForm.message);
+
+        fetch("/api/contact", {
+            method: "POST",
+            body: formInfo,
+        }).then(res => {
+            if (res.ok) {
+                setSubmitted("contact");
+                setContactForm({ name: "", email: "", type: "investor", message: "" });
+                setTimeout(() => setSubmitted(null), 4000);
+            }
+        });
     };
 
     /* ── inline styles shared ── */
@@ -294,7 +330,7 @@ export default function RealEstatePage() {
                 }}
             >
                 {/* Logo */}
-                <a href="/" style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <Link href="/" style={{ display: "flex", alignItems: "center", gap: 12 }}>
                     <div style={{ width: 36, height: 36, background: S.gold, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                         <Image src="/assets/logo.png" alt="Pithy Means Africa Logo" width={21} height={21} />
                     </div>
@@ -302,7 +338,7 @@ export default function RealEstatePage() {
                         <div style={{ fontFamily: "-apple-system", fontSize: 15, color: scrolled ? "#f5f0e8" : "#f5f0e8", fontWeight: 500, lineHeight: 1.1 }}>Pithy Means Africa</div>
                         <div style={{ fontFamily: S.sans, fontSize: 9, letterSpacing: "0.28em", textTransform: "uppercase", color: S.gold, lineHeight: 1 }}>Real Estate & Investments</div>
                     </div>
-                </a>
+                </Link>
 
                 {/* Nav links */}
                 <div className="nav-links" style={{ display: "flex", alignItems: "center", gap: 36 }}>
@@ -317,7 +353,7 @@ export default function RealEstatePage() {
                             {n.label}
                         </a>
                     ))}
-                    <a href="#contact" className="btn-primary" style={{ padding: "10px 24px", fontSize: 11 }}>Invest With Us</a>
+                    <Link href="#contact" className="btn-primary" style={{ padding: "10px 24px", fontSize: 11 }}>Invest With Us</Link>
                 </div>
 
                 {/* Mobile burger */}
@@ -403,15 +439,19 @@ export default function RealEstatePage() {
 
                     {/* RIGHT — image mosaic */}
                     <div className="hero-img-col" style={{ position: "relative", height: 560 }}>
-                        <img
+                        <Image
                             src="https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=700&q=80&auto=format&fit=crop"
                             alt="African real estate"
+                            width={400}
+                            height={500}
                             className="float-el"
                             style={{ position: "absolute", top: 0, right: 0, width: "80%", height: "65%", objectFit: "cover", borderRadius: 2, filter: "brightness(0.82)" }}
                         />
-                        <img
+                        <Image
                             src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=2340&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=500&q=80&auto=format&fit=crop"
                             alt="Kampala skyline"
+                            width={200}
+                            height={400}
                             style={{ position: "absolute", bottom: 0, left: 0, width: "55%", height: "45%", objectFit: "cover", borderRadius: 2, filter: "brightness(0.75)", animationDelay: "1.5s" }}
                             className="float-el"
                         />
@@ -466,9 +506,11 @@ export default function RealEstatePage() {
                         </div>
 
                         <div style={{ position: "relative" }}>
-                            <img
+                            <Image
                                 src="https://images.unsplash.com/photo-1675756261486-09bd1e0f6c8a?q=80&w=2832&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=800&q=80&auto=format&fit=crop"
                                 alt="Kampala Uganda"
+                                width={300}
+                                height={200}
                                 style={{ width: "100%", height: 480, objectFit: "cover", borderRadius: 2, filter: "brightness(0.88)" }}
                             />
                             {/* Floating badge */}
@@ -521,66 +563,9 @@ export default function RealEstatePage() {
             </section>
 
             {/* ══════════════════════════════
-          OPPORTUNITIES  §4
-      ══════════════════════════════ */}
-            <section id="opportunities" style={{ background: S.ink, padding: "120px 40px" }}>
-                <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 72, flexWrap: "wrap", gap: 24 }}>
-                        <div>
-                            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-                                <div style={{ width: 28, height: 1, background: S.gold }} />
-                                <span style={{ fontFamily: S.sans, fontSize: 10, fontWeight: 500, letterSpacing: "0.42em", textTransform: "uppercase", color: S.gold }}>Live Listings</span>
-                            </div>
-                            <h2 style={{ fontFamily: S.serif, fontSize: "clamp(36px,4.5vw,56px)", fontWeight: 300, color: "#f5f0e8", lineHeight: 1.08 }}>
-                                Investment<br /><em style={{ color: S.gold }}>Opportunities</em>
-                            </h2>
-                        </div>
-                        <p style={{ fontFamily: S.sans, fontSize: 14, lineHeight: 1.75, color: "rgba(245,240,232,0.45)", maxWidth: 340 }}>
-                            Where money meets projects. Every listing has passed our due-diligence process — legal, financial, and on-ground verification.
-                        </p>
-                    </div>
-
-                    <div className="opp-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 24 }}>
-                        {OPPORTUNITIES.map((o, i) => (
-                            <div
-                                key={i}
-                                className="opp-card"
-                                style={{ border: "1px solid rgba(184,146,74,0.18)", background: "rgba(255,255,255,0.02)", padding: "36px 32px", position: "relative", overflow: "hidden" }}
-                            >
-                                {/* Top accent */}
-                                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, ${S.gold}, transparent)` }} />
-
-                                <div style={{ fontFamily: S.sans, fontSize: 10, fontWeight: 500, letterSpacing: "0.3em", textTransform: "uppercase", color: S.gold, marginBottom: 16 }}>{o.sector}</div>
-                                <p style={{ fontFamily: S.sans, fontSize: 14, lineHeight: 1.7, color: "rgba(245,240,232,0.6)", marginBottom: 32 }}>{o.summary}</p>
-
-                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, borderTop: "1px solid rgba(184,146,74,0.12)", paddingTop: 24 }}>
-                                    {[
-                                        { k: "Country", v: o.country },
-                                        { k: "Capital", v: o.capital },
-                                        { k: "Stage", v: o.stage },
-                                        { k: "Return Period", v: o.returnPeriod },
-                                    ].map((row) => (
-                                        <div key={row.k}>
-                                            <div style={{ fontFamily: S.sans, fontSize: 9, letterSpacing: "0.25em", textTransform: "uppercase", color: "rgba(184,146,74,0.55)", marginBottom: 4 }}>{row.k}</div>
-                                            <div style={{ fontFamily: S.serif, fontSize: 15, color: "#f5f0e8", fontStyle: "italic" }}>{row.v}</div>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                <div style={{ marginTop: 28 }}>
-                                    <a href="#contact" className="btn-outline" style={{ display: "inline-block", fontSize: 10, padding: "11px 24px", borderColor: "rgba(184,146,74,0.4)", color: S.gold }}>
-                                        Express Interest
-                                    </a>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* ══════════════════════════════
           SUBMIT OPPORTUNITY  §5
       ══════════════════════════════ */}
+
             <section id="submit" style={{ background: S.creamDark, padding: "120px 40px" }}>
                 <div style={{ maxWidth: 840, margin: "0 auto" }}>
                     <div style={{ textAlign: "center", marginBottom: 60 }}>
@@ -604,8 +589,19 @@ export default function RealEstatePage() {
                         ))}
                     </div>
 
-                    <form onSubmit={handleOppSubmit} style={{ display: "flex", flexDirection: "column", gap: 20, background: S.white, padding: "48px 44px", border: `1px solid rgba(184,146,74,0.15)` }}>
+                    <form style={{ display: "flex", flexDirection: "column", gap: 20, background: S.white, padding: "48px 44px", border: `1px solid rgba(184,146,74,0.15)` }}>
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+                        <div>
+                            <label style={{ fontFamily: S.sans, fontSize: 11, letterSpacing: "0.2em", textTransform: "lowercase", color: S.inkSoft, display: "block", marginBottom: 8 }}>Email Address</label>
+                            <input
+                                type="text"
+                                placeholder="Email address"
+                                value={oppForm.email}
+                                onChange={(e) => setOppForm({ ...oppForm, email: e.target.value })}
+                                style={{ ...inputStyle, background: S.cream, border: "1px solid rgba(184,146,74,0.2)", color: S.ink }}
+                                required
+                            />
+                        </div>
                             <div>
                                 <label style={{ fontFamily: S.sans, fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: S.inkSoft, display: "block", marginBottom: 8 }}>Sector</label>
                                 <input
@@ -629,6 +625,7 @@ export default function RealEstatePage() {
                                 />
                             </div>
                         </div>
+
                         <div>
                             <label style={{ fontFamily: S.sans, fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: S.inkSoft, display: "block", marginBottom: 8 }}>Capital Required (USD)</label>
                             <input
@@ -654,6 +651,7 @@ export default function RealEstatePage() {
                         <div>
                             <label style={{ fontFamily: S.sans, fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: S.inkSoft, display: "block", marginBottom: 8 }}>Supporting Documents</label>
                             <input
+                                id="opp-file-input"
                                 type="file"
                                 accept=".pdf,.doc,.docx,.xls,.xlsx"
                                 style={{ fontFamily: S.sans, fontSize: 13, color: S.inkSoft }}
@@ -662,9 +660,9 @@ export default function RealEstatePage() {
                         </div>
 
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 8 }}>
-                            <button type="submit" className="btn-primary">Submit Opportunity</button>
+                            <button type="button" className="btn-primary" onClick={handleOppSubmit}>Submit Opportunity</button>
                             {submitted === "opp" && (
-                                <span style={{ fontFamily: S.sans, fontSize: 13, color: "#4a9e6b", letterSpacing: "0.06em" }}>✓ Received — we'll be in touch shortly</span>
+                                <span style={{ fontFamily: S.sans, fontSize: 13, color: "#4a9e6b", letterSpacing: "0.06em" }}>✓ Received — we&apos;ll be in touch shortly</span>
                             )}
                         </div>
                     </form>
@@ -795,8 +793,18 @@ export default function RealEstatePage() {
                                     {
                                         icon: "✉️",
                                         label: "Email",
-                                        value: "info@pithymeansafrica.com",
+                                        value: "info@pithymeansplus.com"
                                     },
+                                    {
+                                        icon: "📧",
+                                        label: "Email Address",
+                                        value: "pithymeansafrica@gmail.com ",
+                                    },
+                                    {
+                                        icon: "📧",
+                                        label: "Email Us For",
+                                        value: "pithymeans@gmail.com"
+                                    }
                                 ].map((c) => (
                                     <div key={c.label} style={{ display: "flex", gap: 16, marginBottom: 24, paddingBottom: 24, borderBottom: "1px solid rgba(184,146,74,0.12)" }}>
                                         <span style={{ fontSize: 18, flexShrink: 0 }}>{c.icon}</span>
@@ -873,7 +881,7 @@ export default function RealEstatePage() {
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
                                 <button type="submit" className="btn-primary">Send Inquiry</button>
                                 {submitted === "contact" && (
-                                    <span style={{ fontFamily: S.sans, fontSize: 13, color: "#4a9e6b", letterSpacing: "0.06em" }}>✓ Sent — we'll respond within 48 hours</span>
+                                    <span style={{ fontFamily: S.sans, fontSize: 13, color: "#4a9e6b", letterSpacing: "0.06em" }}>✓ Sent — we&apos;ll respond within 48 hours</span>
                                 )}
                             </div>
 

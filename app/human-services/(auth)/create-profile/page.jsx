@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { MoveLeft, User, Briefcase, Building2, GraduationCap } from "lucide-react";
+import { MoveLeft, Briefcase, Building2, GraduationCap } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 
 const ProfileCreationForm = () => {
@@ -33,7 +33,6 @@ const ProfileCreationForm = () => {
         registrationNumber: "",
         industry: "",
     });
-    const [formErrors, setFormErrors] = useState({});
 
     const router = useRouter();
 
@@ -52,18 +51,18 @@ const ProfileCreationForm = () => {
         setUserId(userData.id);
     }, [router]);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prev) => ({ ...prev, [name]: value }));
+    // const handleChange = (e) => {
+    //     const { name, value } = e.target;
+    //     setFormData((prev) => ({ ...prev, [name]: value }));
 
-        if (formErrors[name]) {
-            setFormErrors((prev) => {
-                const newErrors = { ...prev };
-                delete newErrors[name];
-                return newErrors;
-            });
-        }
-    };
+    //     if (formErrors[name]) {
+    //         setFormErrors((prev) => {
+    //             const newErrors = { ...prev };
+    //             delete newErrors[name];
+    //             return newErrors;
+    //         });
+    //     }
+    // };
 
     const handleCategorySelect = (selectedCategory) => {
         setCategory(selectedCategory);
@@ -95,7 +94,6 @@ const ProfileCreationForm = () => {
             if (!formData.businessType.trim()) errors.businessType = "Business type is required";
         }
 
-        setFormErrors(errors);
         return Object.keys(errors).length === 0;
     };
 

@@ -125,6 +125,7 @@ export const getSession = async () => {
     const session = await account.get();
     return parseStringify(session);
   } catch (error) {
+    console.error("Error getting session:", error);
     return null;
   }
 };
@@ -653,7 +654,7 @@ export const register = async (userdata: Partial<UserInfo>) => {
               );
             }
           } catch (urlError) {
-            console.log("Not a valid URL, trying regex extraction");
+            console.log("Not a valid URL, trying regex extraction", urlError);
             throw new Error("Not a valid URL");
           }
 
@@ -1014,6 +1015,7 @@ export const updateVerify = async (data: VerifyUser) => {
     const response = await account.updateVerification(user_id, secret);
     return parseStringify(response);
   } catch (error) {
+    console.error("Error updating verification:", error);
     return;
   }
 };
@@ -1024,6 +1026,7 @@ export const updateUserSession = async () => {
     const session = await account.updateSession("current");
     return parseStringify(session);
   } catch (error) {
+    console.error("Error updating user session:", error);
     return null;
   }
 };
@@ -1034,6 +1037,7 @@ export const getLoggedInUser = async () => {
     const user = await getUserInfo({ userId: response.$id });
     return parseStringify(user);
   } catch (error) {
+    console.error("Error getting logged in user:", error);
     return null;
   }
 };
@@ -2249,6 +2253,7 @@ export const searchFundingByTitle = async (
 
   } catch (error) {
     // Return undefined or throw error based on desired error handling strategy
+    console.error("Error searching fundings by title:", error);
     return undefined;
   }
 };

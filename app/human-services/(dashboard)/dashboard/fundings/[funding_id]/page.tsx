@@ -26,6 +26,7 @@ const FundingDetail = () => {
           setFunding(fetchedFundings);
           setLoading(false);
         } catch (err) {
+          console.error("Error fetching funding details:", err);
           setError("Failed to load funding details. Please try again.");
           setLoading(false);
         }
