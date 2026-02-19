@@ -30,33 +30,6 @@ const NAV: NavItem[] = [
     { label: "Contact", href: "#contact" },
 ];
 
-const OPPORTUNITIES: Opportunity[] = [
-    {
-        sector: "Residential Real Estate",
-        summary: "Mixed-use development on 4 acres in Kampala's northern corridor — 48 units targeting mid-income buyers with integrated retail space.",
-        country: "Uganda",
-        capital: "$2.4M",
-        stage: "Pre-development",
-        returnPeriod: "4 – 6 years",
-    },
-    {
-        sector: "Commercial Property",
-        summary: "Grade-A office complex in Nairobi's Westlands district. Anchor tenant secured. Construction-ready with all permits in place.",
-        country: "Kenya",
-        capital: "$8.5M",
-        stage: "Ready to Build",
-        returnPeriod: "5 – 8 years",
-    },
-    {
-        sector: "Land Investment",
-        summary: "Prime agricultural and development land portfolio — 200 acres across Masaka and Mbarara regions with high appreciation trajectory.",
-        country: "Uganda",
-        capital: "$650K",
-        stage: "Acquisition",
-        returnPeriod: "3 – 5 years",
-    },
-];
-
 const SERVICES = [
     {
         cat: "Real Estate Business",
