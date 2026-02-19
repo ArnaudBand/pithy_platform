@@ -448,7 +448,7 @@ export default function RealEstatePage() {
                             style={{ position: "absolute", top: 0, right: 0, width: "80%", height: "65%", objectFit: "cover", borderRadius: 2, filter: "brightness(0.82)" }}
                         />
                         <Image
-                            src="/assets/i.png"
+                            src="/assets/i1.png"
                             alt="Kampala skyline"
                             width={200}
                             height={400}
