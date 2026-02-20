@@ -2,9 +2,6 @@ import localFont from "next/font/local";
 import "../globals.css";
 import ConditionalLayout from "@/components/ConditionalLayout";
 import { UserProvider } from "@/context/UserContext";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from '@vercel/speed-insights/next';
-import PWAInstallPromotion from "@/components/PWAInstallPromotion";
 
 const geistSans = localFont({
   src: "../fonts/GeistVF.woff",
@@ -362,9 +359,6 @@ export default function RootLayout({
         <UserProvider>
           <ConditionalLayout>{children}</ConditionalLayout>
         </UserProvider>
-        <PWAInstallPromotion />
-        <Analytics />
-        <SpeedInsights />
       </body>
     </html>
   );
