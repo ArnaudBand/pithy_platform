@@ -10,14 +10,6 @@ import { useState, useEffect } from "react";
    TYPES
 ───────────────────────────────────── */
 type NavItem = { label: string; href: string };
-// type Opportunity = {
-//     sector: string;
-//     summary: string;
-//     country: string;
-//     capital: string;
-//     stage: string;
-//     returnPeriod: string;
-// };
 
 /* ─────────────────────────────────────
    DATA
@@ -900,7 +892,8 @@ export default function RealEstatePage() {
                                 <div style={{ fontFamily: S.sans, fontSize: 13, color: "rgba(245,240,232,0.4)", lineHeight: 2 }}>
                                     <div>ROFRA House, Gaba Road</div>
                                     <div>Kansanga, Kampala</div>
-                                    <div>+256 787 739532</div>
+                                    <div><a href="https://wa.me/256787739532" target="_blank" rel="noopener noreferrer" style={{ color: S.gold, borderBottom: `1px solid rgba(184,146,74,0.4)` }}>+256 787 739532</a></div>
+                                    <div>+256 772 289 692</div>
                                 </div>
                             </div>
                         </div>

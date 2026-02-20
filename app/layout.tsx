@@ -1,7 +1,7 @@
 import localFont from "next/font/local";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import PWAInstallPromotion from "@/components/PWAInstallPromotion";
+// import PWAInstallPromotion from "@/components/PWAInstallPromotion";
 import "./globals.css";
 
 const geistMono = localFont({
@@ -342,7 +342,6 @@ export default function RootLayout({
                 <link rel="icon" href="/favicon.ico" />
                 {/** Manifest */}
                 <link rel="manifest" href="/manifest.json" />
-
                 {/* Optionally, add more sizes for better support */}
                 <link
                     rel="icon"
@@ -361,7 +360,7 @@ export default function RootLayout({
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased overflow-x-hidden`}>
                 {children}
-                <PWAInstallPromotion />
+                {/* <PWAInstallPromotion /> */}
                 <Analytics />
                 <SpeedInsights />
             </body>
