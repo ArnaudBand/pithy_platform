@@ -3,12 +3,6 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const RECIPIENTS = [
-  "pithymeansafrica@gmail.com",
-  "pithymeans@gmail.com",
-  "info@pithymeansplus.com",
-];
-
 const INQUIRY_LABELS: Record<string, string> = {
   investor:     "Investor Inquiry",
   partnership:  "Partnership Inquiry",
@@ -37,8 +31,9 @@ export async function POST(req: NextRequest) {
     const inquiryLabel = INQUIRY_LABELS[type] ?? "General Inquiry";
 
     await resend.emails.send({
-      from: "Pithy Means Africa <onboarding@resend.dev>",
-      to: RECIPIENTS,
+      from: "Pithy Means Africa <noreply@pithymeansplus.com>",
+      to: ["pithymeansafrica@gmail.com", "pithymeans@gmail.com", "denis.bsm1@gmail.com"], // internal team emails
+      replyTo: email, // so you can reply back to the submitter
       subject: `${inquiryLabel} from ${name}`,
       html: `
         <div style="font-family:Georgia,serif;max-width:600px;margin:0 auto;color:#1a1a1a">
