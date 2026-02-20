@@ -95,7 +95,6 @@ export default function RealEstatePage() {
             method: "POST",
             body: formData,
         });
-        console.log("Opportunity submission response:", res);
         if (res.ok) {
             setSubmitted("opp");
             setOppForm({ sector: "", country: "", email: "", capital: "", summary: "", docs: "" });
