@@ -113,16 +113,16 @@ export default function RealEstatePage() {
 
     const handleContactSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        
-        const formInfo = new FormData();
-        formInfo.append("name", contactForm.name);
-        formInfo.append("email", contactForm.email);
-        formInfo.append("type", contactForm.type);
-        formInfo.append("message", contactForm.message);
 
         fetch("/api/contact", {
             method: "POST",
-            body: formInfo,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                name: contactForm.name,
+                email: contactForm.email,
+                type: contactForm.type,
+                message: contactForm.message,
+            }),
         }).then(res => {
             if (res.ok) {
                 setSubmitted("contact");
@@ -792,7 +792,7 @@ export default function RealEstatePage() {
                         </div>
 
                         {/* Form */}
-                        <form onSubmit={handleContactSubmit} style={{ background: S.white, padding: "48px 44px", border: "1px solid rgba(184,146,74,0.12)", display: "flex", flexDirection: "column", gap: 20 }}>
+                        <form style={{ background: S.white, padding: "48px 44px", border: "1px solid rgba(184,146,74,0.12)", display: "flex", flexDirection: "column", gap: 20 }}>
                             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
                                 <div>
                                     <label style={{ fontFamily: S.sans, fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", color: S.inkSoft, display: "block", marginBottom: 8 }}>Full Name</label>
@@ -846,7 +846,7 @@ export default function RealEstatePage() {
                             </div>
 
                             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-                                <button type="submit" className="btn-primary">Send Inquiry</button>
+                                <button type="button" onClick={handleContactSubmit} className="btn-primary">Send Inquiry</button>
                                 {submitted === "contact" && (
                                     <span style={{ fontFamily: S.sans, fontSize: 13, color: "#4a9e6b", letterSpacing: "0.06em" }}>✓ Sent — we&apos;ll respond within 48 hours</span>
                                 )}
