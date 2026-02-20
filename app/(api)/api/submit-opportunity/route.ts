@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
 
     await resend.emails.send({
       from: "Pithy Means Africa <noreply@pithymeansplus.com>",
-      to: ["pithymeansafrica@gmail.com", "pithymeans@gmail.com", "denis.bsm1@gmail.com"], // internal team emails
+      to: ["pithymeansafrica@gmail.com", "pithymeans@gmail.com", "denis.bsm1@gmail.com", "pithymeansads@gmail.com"], // internal team emails
       replyTo: email, // so you can reply back to the submitter
       subject: `New Opportunity — ${sector} (${country})`,
       attachments,
