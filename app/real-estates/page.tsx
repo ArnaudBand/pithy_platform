@@ -765,7 +765,7 @@ export default function RealEstatePage() {
                                     {
                                         icon: "✉️",
                                         label: "Email",
-                                        value: "info@pithymeansplus.com,    pithymeansafrica@gmail.com,    pithymeans@gmail.com"
+                                        value: "info@pithymeansplus.com\npithymeansafrica@gmail.com\npithymeans@gmail.com"
                                     },
                                     {
                                         icon: "✆",
@@ -777,7 +777,7 @@ export default function RealEstatePage() {
                                         <span style={{ fontSize: 18, flexShrink: 0 }}>{c.icon}</span>
                                         <div>
                                             <div style={{ fontFamily: S.sans, fontSize: 10, fontWeight: 500, letterSpacing: "0.22em", textTransform: "uppercase", color: S.gold, marginBottom: 4 }}>{c.label}</div>
-                                            <div style={{ fontFamily: S.sans, fontSize: 14, color: S.inkMid, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{c.value}</div>
+                                            <div style={{ fontFamily: S.sans, fontSize: 16, color: S.inkMid, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{c.value}</div>
                                         </div>
                                     </div>
                                 ))}
