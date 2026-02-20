@@ -64,9 +64,8 @@ const TEAM = [
     },
 ];
 
-/* ─────────────────────────────────────
-   COMPONENT
-───────────────────────────────────── */
+/* ───────────────────────────────────── COMPONENT ──────────────────────────────────── */
+
 export default function RealEstatePage() {
     const [menuOpen, setMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
