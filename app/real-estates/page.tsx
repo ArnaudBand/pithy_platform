@@ -10,14 +10,14 @@ import { useState, useEffect } from "react";
    TYPES
 ───────────────────────────────────── */
 type NavItem = { label: string; href: string };
-type Opportunity = {
-    sector: string;
-    summary: string;
-    country: string;
-    capital: string;
-    stage: string;
-    returnPeriod: string;
-};
+// type Opportunity = {
+//     sector: string;
+//     summary: string;
+//     country: string;
+//     capital: string;
+//     stage: string;
+//     returnPeriod: string;
+// };
 
 /* ─────────────────────────────────────
    DATA
@@ -50,7 +50,7 @@ const SERVICES = [
 
 const WHY = [
     { title: "Verified Opportunities", body: "Every project passes legal, financial, and on-ground verification before being listed." },
-    { title: "Trusted Local Expertise", body: "Over 20 years of infrastructure and market experience across African countries ." },
+    { title: "Trusted Local Expertise", body: "Over 20 years of infrastructure and market experience across African countries by Our Promoters." },
     { title: "Africa-Wide Access", body: "Starting in Uganda, expanding East Africa and beyond — one platform for the continent." },
     { title: "Diaspora-Ready", body: "Secure remote investing with verified projects, full documentation, and dedicated support." },
     { title: "Risk Management", body: "Diversification, strong legal structures, and active monitoring on every active project." },
@@ -765,7 +765,7 @@ export default function RealEstatePage() {
                                     {
                                         icon: "✉️",
                                         label: "Email",
-                                        value: "info@pithymeansplus.com, pithymeansafrica@gmail.com, pithymeans@gmail.com"
+                                        value: "info@pithymeansplus.com,    pithymeansafrica@gmail.com,    pithymeans@gmail.com"
                                     },
                                     {
                                         icon: "✆",
@@ -777,7 +777,7 @@ export default function RealEstatePage() {
                                         <span style={{ fontSize: 18, flexShrink: 0 }}>{c.icon}</span>
                                         <div>
                                             <div style={{ fontFamily: S.sans, fontSize: 10, fontWeight: 500, letterSpacing: "0.22em", textTransform: "uppercase", color: S.gold, marginBottom: 4 }}>{c.label}</div>
-                                            <div style={{ fontFamily: S.sans, fontSize: 14, color: S.inkMid, lineHeight: 1.5 }}>{c.value}</div>
+                                            <div style={{ fontFamily: S.sans, fontSize: 14, color: S.inkMid, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{c.value}</div>
                                         </div>
                                     </div>
                                 ))}
