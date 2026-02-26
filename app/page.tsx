@@ -281,7 +281,7 @@ export default function Home() {
                                 Explore
                             </p>
                             <h2 style={{ fontSize: "clamp(42px,5.5vw,76px)", fontWeight: 300, color: "#ecf5e8", lineHeight: 0.95, letterSpacing: "0.02em", marginBottom: 20 }}>
-                                Real<br />Estate
+                                Real Estate,<br/> Financing And Investment Connections
                             </h2>
                             <p style={{ fontSize: "clamp(13px,1.1vw,15px)", lineHeight: 1.7, color: "rgba(237, 245, 232, 0.52)", maxWidth: 300, marginBottom: 32 }}>
                                 Premium properties and investment opportunities across Africa&apos;s finest locations.
