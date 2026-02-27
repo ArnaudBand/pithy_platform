@@ -297,8 +297,8 @@ export default function RealEstatePage() {
                         <Image src="/assets/logo.png" alt="Pithy Means Africa Logo" width={21} height={21} />
                     </div>
                     <div>
-                        <div style={{ fontFamily: "-apple-system", fontSize: 15, color: scrolled ? "#f5f0e8" : "#f5f0e8", fontWeight: 500, lineHeight: 1.1 }}>Pithy Means Africa</div>
-                        <div style={{ fontFamily: S.sans, fontSize: 9, letterSpacing: "0.28em", textTransform: "uppercase", color: S.gold, lineHeight: 1 }}>Real Estate & Investments</div>
+                        <div style={{ fontFamily: "'Google Sans Code', monospace", color: "#ebf5e8", fontSize: 15, fontWeight: 400, letterSpacing: "0.05em" }}>Pithy Means Africa</div>
+                        <div style={{ fontFamily: "'Google Sans Code', monospace", color: "#90c87e", fontSize: 10, letterSpacing: "0.28em", textTransform: "uppercase", marginTop: 1 }}>Investment & Real Estate</div>
                     </div>
                 </Link>
 
