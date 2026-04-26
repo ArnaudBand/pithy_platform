@@ -22,28 +22,27 @@ const nextConfig = {
     return config;
   },
   async headers() {
-    return [
-      {
-        source:
-          "/(.*).(js|css|woff|woff2|ttf|otf|eot|ico|jpg|jpeg|png|svg|gif|webp|avif)",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
-          },
-        ],
-      },
-      {
-        source: "/_next/static/(.*)",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
-          },
-        ],
-      },
-    ];
-  },
+      return [
+        {
+          source: "/(.*)",
+          headers: [
+            {
+              key: "Cache-Control",
+              value: "no-cache, no-store, must-revalidate",
+            },
+          ],
+        },
+        {
+          source: "/_next/static/(.*)",
+          headers: [
+            {
+              key: "Cache-Control",
+              value: "public, max-age=31536000, immutable",
+            },
+          ],
+        },
+      ];
+    },
   experimental: {
     typedRoutes: true,
     serverActions: {
