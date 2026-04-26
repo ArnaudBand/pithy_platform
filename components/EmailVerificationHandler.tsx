@@ -4,47 +4,35 @@ import React, { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { Button } from "./ui/button";
+import { verifyEmail } from "@/lib/actions/auth.actions";
 
 const EmailVerificationHandler = () => {
-    const [status, setStatus] = useState < "loading" | "success" | "error" > ("loading");
+    const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
     const [message, setMessage] = useState("");
     const router = useRouter();
     const searchParams = useSearchParams();
     const token = searchParams.get("token");
 
     useEffect(() => {
-        const verifyEmail = async () => {
+        const runVerification = async () => {
             if (!token) {
                 setStatus("error");
                 setMessage("Invalid verification link. No token provided.");
                 return;
             }
 
-            try {
-                const response = await fetch(
-                    `http://localhost:8080/api/users/verify?token=${encodeURIComponent(token)}`,
-                    {
-                        method: "GET",
-                    }
-                );
+            const result = await verifyEmail(token);
 
-                const data = await response.json();
-
-                if (response.ok) {
-                    setStatus("success");
-                    setMessage(data.message || "Email verified successfully! You can now sign in.");
-                } else {
-                    setStatus("error");
-                    setMessage(data.message || "Email verification failed. The link may be expired or invalid.");
-                }
-            } catch (error) {
+            if (result.success) {
+                setStatus("success");
+                setMessage(result.message ?? "Email verified successfully! You can now sign in.");
+            } else {
                 setStatus("error");
-                setMessage("An error occurred during verification. Please try again.");
-                console.error("Verification error:", error);
+                setMessage(result.message ?? "Email verification failed. The link may be expired or invalid.");
             }
         };
 
-        verifyEmail();
+        runVerification();
     }, [token]);
 
     return (
@@ -76,7 +64,7 @@ const EmailVerificationHandler = () => {
                         </h1>
                         <p className="text-gray-600 mb-6">{message}</p>
                         <Button
-                            onClick={() => router.push("/signIn")}
+                            onClick={() => router.push("/human-services/signIn")}
                             className="w-full bg-gradient-to-r from-[#5AC35A] to-[#00AE76] text-white hover:opacity-90"
                         >
                             Continue to Sign In
@@ -98,14 +86,14 @@ const EmailVerificationHandler = () => {
 
                         <div className="space-y-3">
                             <Button
-                                onClick={() => router.push("/signup")}
+                                onClick={() => router.push("/human-services/signUp")}
                                 variant="outline"
                                 className="w-full"
                             >
                                 Try Signing Up Again
                             </Button>
                             <Button
-                                onClick={() => router.push("/signIn")}
+                                onClick={() => router.push("/human-services/signIn")}
                                 className="w-full bg-gradient-to-r from-[#5AC35A] to-[#00AE76] text-white hover:opacity-90"
                             >
                                 Go to Sign In

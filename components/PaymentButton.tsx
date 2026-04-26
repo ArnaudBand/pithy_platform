@@ -3,9 +3,10 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
-import { Courses, PaymentData, UserInfo } from "@/types/schema";
+import { Courses, PaymentData } from "@/types/schema";
 import { FaArrowRight } from "react-icons/fa";
-import { useAuthStore } from "@/lib/store/useAuthStore";
+import { getCurrentUser, AuthUser } from "@/lib/actions/auth.actions";
+import { getProfile, ProfileResponse } from "@/lib/actions/profile.actions";
 import countries from "@/types/countries";
 
 type PaymentButtonProps = {
@@ -13,12 +14,13 @@ type PaymentButtonProps = {
 };
 
 const PaymentButton: React.FC<PaymentButtonProps> = ({ course }) => {
-  const { user } = useAuthStore((state) => state as unknown as UserInfo);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+  const [profile, setProfile] = useState<ProfileResponse | null>(null);
   const [formData, setFormData] = useState<Partial<PaymentData>>({
-    user_id: user?.user_id,
-    email: user?.email,
-    phone_number: user?.phone,
-    name: `${user?.firstname || ''} ${user?.lastname || ''}`.trim(),
+    user_id: "",
+    email: "",
+    phone_number: "",
+    name: "",
     course_choice: course.course_id,
     amount: 6,
     tx_ref: "",
@@ -28,18 +30,26 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ course }) => {
   const [selectedCountry, setSelectedCountry] = useState(countries[0]);
   const [exchangeRate, setExchangeRate] = useState(1);
 
-  // Update formData when user data changes
+  // Load user and profile on mount, then populate form data
   useEffect(() => {
-    if (user) {
-      setFormData(prev => ({
-        ...prev,
-        user_id: user.user_id,
-        email: user.email,
-        phone_number: user.phone,
-        name: `${user.firstname || ''} ${user.lastname || ''}`.trim(),
-      }));
-    }
-  }, [user]);
+    const loadUser = async () => {
+      const u = await getCurrentUser();
+      setAuthUser(u);
+      if (u) {
+        const res = await getProfile(u.id);
+        const p = res.success && res.profile ? res.profile : null;
+        setProfile(p);
+        setFormData(prev => ({
+          ...prev,
+          user_id: u.id,
+          email: u.email,
+          phone_number: p?.phoneNumber || "",
+          name: `${p?.firstName || ""} ${p?.lastName || ""}`.trim(),
+        }));
+      }
+    };
+    loadUser();
+  }, []);
 
   useEffect(() => {
     const fetchExchangeRate = async () => {
@@ -78,10 +88,10 @@ const PaymentButton: React.FC<PaymentButtonProps> = ({ course }) => {
         tx_ref: tx_ref,
         amount: amountInSelectedCurrency,
         currency: selectedCountry.currency,
-        email: user?.email || formData.email,
-        name: formData.name || `${user?.firstname || ''} ${user?.lastname || ''}`.trim(),
-        phone_number: user?.phone || formData.phone_number,
-        user_id: user?.user_id || formData.user_id,
+        email: authUser?.email || formData.email,
+        name: formData.name || `${profile?.firstName || ""} ${profile?.lastName || ""}`.trim(),
+        phone_number: profile?.phoneNumber || formData.phone_number,
+        user_id: authUser?.id || formData.user_id,
         course_choice: course.course_id || formData.course_choice,
       };
 

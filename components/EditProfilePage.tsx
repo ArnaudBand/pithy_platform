@@ -1,575 +1,567 @@
 "use client";
 
-import { useState } from "react";
-import { UserInfo } from "@/types/schema";
-import Image from "next/image";
-import { useAuthStore } from "@/lib/store/useAuthStore";
-import { updateUserProfile } from "@/lib/actions/user.actions";
-import toast, { Toaster } from "react-hot-toast"; // Import toast
+import { useEffect, useState } from "react";
+import toast, { Toaster } from "react-hot-toast";
+import { getCurrentUser } from "@/lib/actions/auth.actions";
+import {
+  getProfile,
+  updateProfile,
+  ProfileRequest,
+  ProfileResponse,
+  UserCategory,
+} from "@/lib/actions/profile.actions";
+import { changePassword } from "@/lib/actions/auth.actions";
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type ProfileFormData = Partial<ProfileRequest>;
+
+interface PasswordFields {
+  currentPassword: string;
+  newPassword: string;
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function EditProfilePage() {
-  const { user, setUser } = useAuthStore(
-    (state) =>
-      state as unknown as {
-        user: UserInfo;
-        setUser: (user: UserInfo) => void;
-      },
-  );
+  const [userId, setUserId] = useState<string | null>(null);
+  const [profileCategory, setProfileCategory] = useState<UserCategory | null>(null); // locked — never changes
+  const [formData, setFormData] = useState<ProfileFormData>({});
+  const [passwordFields, setPasswordFields] = useState<PasswordFields>({
+    currentPassword: "",
+    newPassword: "",
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<Partial<UserInfo>>(user || {});
+  // ── Fetch current profile on mount ──────────────────────────────────────────
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (!user) {
+          toast.error("Not authenticated.");
+          setIsLoading(false);
+          return;
+        }
+        setUserId(user.id);
 
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-gray-600 text-lg animate-pulse">
-          Loading user info...
-        </p>
-      </div>
-    );
-  }
+        const result = await getProfile(user.id);
+        if (result.success && result.profile) {
+          const p: ProfileResponse = result.profile;
+
+          // Lock the category — the backend does not support changing it
+          setProfileCategory(p.category);
+
+          // Flatten the nested profile into a single ProfileRequest-shaped object
+          setFormData({
+            firstName: p.firstName,
+            lastName: p.lastName,
+            phoneNumber: p.phoneNumber,
+            address: p.address,
+            bio: p.bio ?? "",
+            category: p.category,
+            // STUDENT
+            major: p.student?.major ?? "",
+            educationLevel: p.student?.educationLevel ?? "",
+            institutionName: p.student?.institutionName ?? "",
+            faculty: p.student?.faculty ?? "",
+            subject: p.student?.subject ?? "",
+            yearOfGraduation: p.student?.yearOfGraduation ?? "",
+            // EMPLOYEE
+            companyName: p.employee?.companyName ?? "",
+            position: p.employee?.position ?? "",
+            department: p.employee?.department ?? "",
+            employmentType: p.employee?.employmentType ?? "",
+            yearsOfExperience: p.employee?.yearsOfExperience ?? "",
+            // OWNER
+            businessName: p.owner?.businessName ?? "",
+            businessType: p.owner?.businessType ?? "",
+            registrationNumber: p.owner?.registrationNumber ?? "",
+            industry: p.owner?.industry ?? "",
+          });
+        } else {
+          toast.error(result.message ?? "Could not load profile.");
+        }
+      } catch {
+        toast.error("Something went wrong loading your profile.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    load();
+  }, []);
+
+  // ── Handlers ─────────────────────────────────────────────────────────────────
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ) => {
     const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-    // Handle nested fields
-    if (name.includes(".")) {
-      const [parent, child] = name.split(".");
-      setFormData((prev) => ({
-        ...prev,
-        [parent]: {
-          ...(prev[parent] as Record<string, unknown>),
-          [child]: value,
-        },
-      }));
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPasswordFields((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    if (!userId) return;
 
+    // ── Validate required fields before hitting the API ───────────────────────
+    if (!formData.firstName?.trim() || !formData.lastName?.trim()) {
+      toast.error("First name and last name are required.");
+      return;
+    }
+    if (!formData.phoneNumber?.trim() || !formData.address?.trim()) {
+      toast.error("Phone number and address are required.");
+      return;
+    }
+    // Use profileCategory (from DB) — NOT formData.category — as the source of truth
+    const category = profileCategory;
+    if (!category) {
+      toast.error("Profile category is missing. Please refresh the page.");
+      return;
+    }
+    if (category === "STUDENT" && !formData.educationLevel) {
+      toast.error("Please select an education level.");
+      return;
+    }
+
+    // Build the payload — always send the stored category so the backend is consistent
+    const payload: Partial<ProfileRequest> = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      phoneNumber: formData.phoneNumber,
+      address: formData.address,
+      bio: formData.bio,
+      category,
+    };
+
+    if (category === "STUDENT") {
+      payload.major = formData.major;
+      payload.educationLevel = formData.educationLevel;
+      payload.institutionName = formData.institutionName;
+      payload.faculty = formData.faculty;
+      payload.subject = formData.subject;
+      payload.yearOfGraduation = formData.yearOfGraduation;
+    } else if (category === "EMPLOYEE") {
+      payload.companyName = formData.companyName;
+      payload.position = formData.position;
+      payload.department = formData.department;
+      payload.employmentType = formData.employmentType;
+      payload.yearsOfExperience = formData.yearsOfExperience;
+    } else if (category === "OWNER") {
+      payload.businessName = formData.businessName;
+      payload.businessType = formData.businessType;
+      payload.registrationNumber = formData.registrationNumber;
+      payload.industry = formData.industry;
+    }
+
+    // Debug: log what's being sent (remove after confirming fix)
+    console.log("[EditProfilePage] Submitting payload:", JSON.stringify(payload, null, 2));
+
+    setIsSaving(true);
     try {
-      // Clean up the data for submission
-      const dataToSubmit = { ...formData };
-
-      // Format category-specific data based on selected category
-      if (formData.categories) {
-        if (formData.categories === "student") {
-          dataToSubmit.education_level = formData.education_level as string;
-          dataToSubmit.institution_name = formData.institution_name;
-          dataToSubmit.major_subject = formData.major_subject;
-          dataToSubmit.expected_graduation_year = Number(
-            formData.expected_graduation_year
-          );
-        }
-
-        if (formData.categories === "job seeker") {
-          dataToSubmit.desired_job_title = formData.desired_job_title;
-          dataToSubmit.skills = formData.skills;
-          dataToSubmit.years_of_work_experience = Number(
-            formData.years_of_work_experience
-          );
-          dataToSubmit.resume_link = formData.resume_link;
-          dataToSubmit.availability_status =
-            formData.availability_status as string;
-        }
-        if (formData.categories === "employer") {
-          dataToSubmit.company_name = formData.company_name;
-          dataToSubmit.company_size = formData.company_size as string;
-          dataToSubmit.industry_type = formData.industry_type;
-          dataToSubmit.position_in_company = formData.position_in_company;
-          dataToSubmit.url =   formData.url;
-        }
+      const result = await updateProfile(userId, payload);
+      if (result.success) {
+        toast.success("Profile updated successfully!");
+      } else {
+        toast.error(result.message ?? "Failed to update profile.");
       }
-
-      const result = await updateUserProfile(user.user_id, dataToSubmit);
-      console.log("Profile updated:", result);
-
-      setUser({ ...user, ...dataToSubmit } as UserInfo);
-      toast.success("Profile updated successfully!");
-    } catch (error) {
-      console.error("Failed to update profile:", error);
-      toast.error("Failed to update profile. Please, try again later.");
+    } catch {
+      toast.error("Something went wrong. Please try again.");
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userId) return;
+    if (!passwordFields.currentPassword || !passwordFields.newPassword) {
+      toast.error("Please fill in both password fields.");
+      return;
+    }
+    setIsChangingPassword(true);
+    try {
+      const result = await changePassword(
+        userId,
+        passwordFields.currentPassword,
+        passwordFields.newPassword
+      );
+      if (result.success) {
+        toast.success("Password updated successfully!");
+        setPasswordFields({ currentPassword: "", newPassword: "" });
+      } else {
+        toast.error(result.message ?? "Failed to update password.");
+      }
+    } catch {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  // ── Loading state ─────────────────────────────────────────────────────────────
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[300px]">
+        <p className="text-gray-600 text-lg animate-pulse">Loading…</p>
+      </div>
+    );
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────────
+
   return (
     <div className="h-[70vh] overflow-auto rounded-md shadow-md bg-gray-100">
-      {/* Add Toaster component to render notifications */}
       <Toaster
         position="top-center"
         toastOptions={{
-          success: {
-            style: {
-              background: "#10B981",
-              color: "white",
-            },
-            duration: 3000,
-          },
-          error: {
-            style: {
-              background: "#EF4444",
-              color: "white",
-            },
-            duration: 4000,
-          },
+          success: { style: { background: "#10B981", color: "white" }, duration: 3000 },
+          error: { style: { background: "#EF4444", color: "white" }, duration: 4000 },
         }}
       />
 
       <main className="flex items-center justify-center py-4">
-        <div className="w-full max-w-4xl bg-white rounded-lg p-6">
-          <h1 className="text-2xl font-bold text-center mb-6">
-            Edit Your Profile
-          </h1>
+        <div className="w-full max-w-4xl bg-white rounded-lg p-6 space-y-10">
+          <h1 className="text-2xl font-bold text-center">Edit Your Profile</h1>
 
+          {/* ── Profile form ──────────────────────────────────────────────────── */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Avatar Section */}
-            <div className="flex flex-col items-center mb-6">
-              {user?.avatar ? (
-                <Image
-                  src={user?.avatar}
-                  alt="User Avatar"
-                  width={96}
-                  height={96}
-                  className="w-20 h-20 rounded-full shadow-md mb-4"
-                />
-              ) : (
-                <div className="w-20 h-20 flex items-center justify-center rounded-full shadow-md bg-gray-200 mb-4 text-gray-700 text-xl font-semibold">
-                  {user.firstname?.[0] || user?.lastname?.[0] || "?"}
-                </div>
-              )}
-              {/* Avatar upload could be added here */}
-            </div>
 
-            {/* Basic Information */}
+            {/* Basic Info */}
             <section>
               <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    First Name
-                  </label>
+                <Field label="First Name">
                   <input
                     type="text"
-                    name="firstname"
-                    value={formData.firstname || ""}
+                    name="firstName"
+                    value={formData.firstName ?? ""}
                     onChange={handleChange}
                     className="w-full p-2 border rounded-lg"
+                    required
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Last Name
-                  </label>
+                <Field label="Last Name">
                   <input
                     type="text"
-                    name="lastname"
-                    value={formData.lastname || ""}
+                    name="lastName"
+                    value={formData.lastName ?? ""}
                     onChange={handleChange}
                     className="w-full p-2 border rounded-lg"
+                    required
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email || ""}
-                    onChange={handleChange}
-                    className="w-full p-2 border rounded-lg"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Changing email requires password verification
-                  </p>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone
-                  </label>
+                <Field label="Phone Number">
                   <input
                     type="tel"
-                    name="phone"
-                    value={formData.phone || ""}
+                    name="phoneNumber"
+                    value={formData.phoneNumber ?? ""}
                     onChange={handleChange}
                     className="w-full p-2 border rounded-lg"
+                    required
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Country
-                  </label>
+                <Field label="Address">
                   <input
                     type="text"
-                    name="country"
-                    value={formData.country || ""}
+                    name="address"
+                    value={formData.address ?? ""}
                     onChange={handleChange}
                     className="w-full p-2 border rounded-lg"
+                    required
                   />
-                </div>
+                </Field>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    City
-                  </label>
-                  <input
-                    type="text"
-                    name="city"
-                    value={formData.city || ""}
-                    onChange={handleChange}
-                    className="w-full p-2 border rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Age Range
-                  </label>
-                  <select
-                    name="age"
-                    value={formData.age || ""}
-                    onChange={handleChange}
-                    className="w-full p-2 border rounded-lg"
-                  >
-                    <option value="">Select Age Range</option>
-                    <option value="18-25">18-25</option>
-                    <option value="26-35">26-35</option>
-                    <option value="36-45">36-45</option>
-                    <option value="46 and +">46 and +</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Gender
-                  </label>
-                  <select
-                    name="gender"
-                    value={formData.gender || ""}
-                    onChange={handleChange}
-                    className="w-full p-2 border rounded-lg"
-                  >
-                    <option value="">Select Gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                  </select>
+                <div className="md:col-span-2">
+                  <Field label="Bio (optional)">
+                    <textarea
+                      name="bio"
+                      rows={3}
+                      value={formData.bio ?? ""}
+                      onChange={handleChange}
+                      className="w-full p-2 border rounded-lg resize-none"
+                    />
+                  </Field>
                 </div>
               </div>
             </section>
 
-            {/* Category Selection */}
+            {/* Category — read-only after profile creation */}
             <section>
               <h2 className="text-xl font-semibold mb-4">User Category</h2>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
-                </label>
-                <select
-                  name="categories"
-                  value={formData.categories || ""}
-                  onChange={handleChange}
-                  className="w-full p-2 border rounded-lg"
-                >
-                  <option value="">Select Category</option>
-                  <option value="student">Student</option>
-                  <option value="job seeker">Job Seeker</option>
-                  <option value="employer">Employer</option>
-                </select>
-              </div>
+              <Field label="Category">
+                <div className="w-full p-2 border rounded-lg bg-gray-100 text-gray-700 flex items-center justify-between">
+                  <span>
+                    {formData.category === "STUDENT" && "Student"}
+                    {formData.category === "EMPLOYEE" && "Employee"}
+                    {formData.category === "OWNER" && "Business Owner"}
+                  </span>
+                  <span className="text-xs text-gray-500 italic">
+                    Category cannot be changed after creation
+                  </span>
+                </div>
+              </Field>
             </section>
 
-            {/* Category-specific fields */}
-            {formData.categories === "student" && (
+            {/* STUDENT fields */}
+            {formData.category === "STUDENT" && (
               <section>
-                <h2 className="text-xl font-semibold mb-4">
-                  Student Information
-                </h2>
+                <h2 className="text-xl font-semibold mb-4">Student Information</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Education Level
-                    </label>
+                  <Field label="Education Level">
                     <select
-                      name="education_level"
-                      value={formData.education_level || ""}
+                      name="educationLevel"
+                      value={formData.educationLevel ?? ""}
                       onChange={handleChange}
                       className="w-full p-2 border rounded-lg"
                     >
                       <option value="">Select Education Level</option>
-                      <option value="High School">High School</option>
-                      <option value="Tertiary">Tertiary</option>
-                      <option value="Diploma">Diploma</option>
-                      <option value="Bachelors">Bachelors</option>
-                      <option value="Masters">Masters</option>
-                      <option value="PhD">PhD</option>
+                      <option value="HIGH_SCHOOL">High School</option>
+                      <option value="UNDERGRADUATE">Diploma</option>
+                      <option value="BACHELORS">Bachelor's</option>
+                      <option value="MASTERS">Master's</option>
+                      <option value="DOCTORATE">PhD</option>
                     </select>
-                  </div>
+                  </Field>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Institution Name
-                    </label>
+                  <Field label="Institution Name">
                     <input
                       type="text"
-                      name="institution_name"
-                      value={formData.institution_name || ""}
+                      name="institutionName"
+                      value={formData.institutionName ?? ""}
                       onChange={handleChange}
                       className="w-full p-2 border rounded-lg"
                     />
-                  </div>
+                  </Field>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Major Subject
-                    </label>
+                  <Field label="Faculty">
                     <input
                       type="text"
-                      name="major_subject"
-                      value={formData.major_subject || ""}
+                      name="faculty"
+                      value={formData.faculty ?? ""}
                       onChange={handleChange}
                       className="w-full p-2 border rounded-lg"
                     />
-                  </div>
+                  </Field>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Expected Graduation Year
-                    </label>
+                  <Field label="Major / Subject">
                     <input
-                      type="number"
-                      name="expected_graduation_year"
-                      value={formData.expected_graduation_year || ""}
+                      type="text"
+                      name="major"
+                      value={formData.major ?? ""}
                       onChange={handleChange}
                       className="w-full p-2 border rounded-lg"
                     />
-                  </div>
+                  </Field>
+
+                  <Field label="Graduation Year">
+                    <input
+                      type="text"
+                      name="yearOfGraduation"
+                      value={formData.yearOfGraduation ?? ""}
+                      onChange={handleChange}
+                      placeholder="e.g. 2026"
+                      className="w-full p-2 border rounded-lg"
+                    />
+                  </Field>
                 </div>
               </section>
             )}
 
-            {formData.categories === "job seeker" && (
+            {/* EMPLOYEE fields */}
+            {formData.category === "EMPLOYEE" && (
               <section>
-                <h2 className="text-xl font-semibold mb-4">
-                  Job Seeker Information
-                </h2>
+                <h2 className="text-xl font-semibold mb-4">Employee Information</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Desired Job Title
-                    </label>
+                  <Field label="Company Name">
                     <input
                       type="text"
-                      name="desired_job_title"
-                      value={formData.desired_job_title || ""}
+                      name="companyName"
+                      value={formData.companyName ?? ""}
                       onChange={handleChange}
                       className="w-full p-2 border rounded-lg"
                     />
-                  </div>
+                  </Field>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Skills
-                    </label>
+                  <Field label="Position">
                     <input
                       type="text"
-                      name="skills"
-                      value={formData.skills || ""}
+                      name="position"
+                      value={formData.position ?? ""}
                       onChange={handleChange}
                       className="w-full p-2 border rounded-lg"
-                      placeholder="Separate skills with commas"
                     />
-                  </div>
+                  </Field>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Years of Experience
-                    </label>
+                  <Field label="Department">
                     <input
-                      type="number"
-                      name="years_of_work_experience"
-                      value={formData.years_of_work_experience || ""}
+                      type="text"
+                      name="department"
+                      value={formData.department ?? ""}
                       onChange={handleChange}
                       className="w-full p-2 border rounded-lg"
                     />
-                  </div>
+                  </Field>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Resume Link
-                    </label>
-                    <input
-                      type="url"
-                      name="resume_link"
-                      value={formData.resume_link || ""}
-                      onChange={handleChange}
-                      className="w-full p-2 border rounded-lg"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Availability
-                    </label>
+                  <Field label="Employment Type">
                     <select
-                      name="availability_status"
-                      value={formData.availability_status || ""}
+                      name="employmentType"
+                      value={formData.employmentType ?? ""}
                       onChange={handleChange}
                       className="w-full p-2 border rounded-lg"
                     >
-                      <option value="">Select Availability</option>
-                      <option value="immediately available">
-                        Immediately Available
-                      </option>
-                      <option value="open to opportunities">
-                        Open to Opportunities
-                      </option>
+                      <option value="">Select Type</option>
+                      <option value="Full-time">Full-time</option>
+                      <option value="Part-time">Part-time</option>
+                      <option value="Contract">Contract</option>
+                      <option value="Freelance">Freelance</option>
+                      <option value="Internship">Internship</option>
                     </select>
-                  </div>
+                  </Field>
+
+                  <Field label="Years of Experience">
+                    <input
+                      type="text"
+                      name="yearsOfExperience"
+                      value={formData.yearsOfExperience ?? ""}
+                      onChange={handleChange}
+                      placeholder="e.g. 3"
+                      className="w-full p-2 border rounded-lg"
+                    />
+                  </Field>
                 </div>
               </section>
             )}
 
-            {formData.categories === "employer" && (
+            {/* OWNER fields */}
+            {formData.category === "OWNER" && (
               <section>
-                <h2 className="text-xl font-semibold mb-4">
-                  Employer Information
-                </h2>
+                <h2 className="text-xl font-semibold mb-4">Business Information</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Company Name
-                    </label>
+                  <Field label="Business Name">
                     <input
                       type="text"
-                      name="company_name"
-                      value={formData.company_name || ""}
+                      name="businessName"
+                      value={formData.businessName ?? ""}
                       onChange={handleChange}
                       className="w-full p-2 border rounded-lg"
                     />
-                  </div>
+                  </Field>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Company Size
-                    </label>
-                    <select
-                      name="company_size"
-                      value={formData.company_size || ""}
-                      onChange={handleChange}
-                      className="w-full p-2 border rounded-lg"
-                    >
-                      <option value="">Select Company Size</option>
-                      <option value="1-10 employees">1-10 employees</option>
-                      <option value="11-50 employees">11-50 employees</option>
-                      <option value="51-200 employees">51-200 employees</option>
-                      <option value="201-500 employees">
-                        201-500 employees
-                      </option>
-                      <option value="501+ employees">501+ employees</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Industry Type
-                    </label>
+                  <Field label="Business Type">
                     <input
                       type="text"
-                      name="industry_type"
-                      value={formData.industry_type || ""}
+                      name="businessType"
+                      value={formData.businessType ?? ""}
                       onChange={handleChange}
                       className="w-full p-2 border rounded-lg"
                     />
-                  </div>
+                  </Field>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Position in Company
-                    </label>
+                  <Field label="Registration Number">
                     <input
                       type="text"
-                      name="position_in_company"
-                      value={formData.position_in_company || ""}
+                      name="registrationNumber"
+                      value={formData.registrationNumber ?? ""}
                       onChange={handleChange}
                       className="w-full p-2 border rounded-lg"
                     />
-                  </div>
+                  </Field>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Company Website
-                    </label>
+                  <Field label="Industry">
                     <input
-                      type="url"
-                      name="url"
-                      value={formData.url || ""}
+                      type="text"
+                      name="industry"
+                      value={formData.industry ?? ""}
                       onChange={handleChange}
                       className="w-full p-2 border rounded-lg"
                     />
-                  </div>
+                  </Field>
                 </div>
               </section>
             )}
 
-            {/* Password Update Section (Optional) */}
-            <section>
-              <h2 className="text-xl font-semibold mb-4">
-                Update Password (Optional)
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Current Password
-                  </label>
-                  <input
-                    type="password"
-                    name="password"
-                    onChange={handleChange}
-                    className="w-full p-2 border rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    New Password
-                  </label>
-                  <input
-                    type="password"
-                    name="new_password"
-                    onChange={handleChange}
-                    className="w-full p-2 border rounded-lg"
-                  />
-                </div>
-              </div>
-            </section>
-
-            {/* Submit Button */}
-            <div className="flex justify-center pt-4 pb-8">
+            <div className="flex justify-center pt-2 pb-4">
               <button
                 type="submit"
-                disabled={isLoading}
-                className={`px-8 py-3 rounded-lg font-medium text-white ${
-                  isLoading ? "bg-blue-400" : "bg-blue-600 hover:bg-blue-700"
-                }`}
+                disabled={isSaving}
+                className="px-8 py-3 rounded-lg font-medium text-white bg-gradient-to-r from-[#5AC35A] to-[#00AE76] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
               >
-                {isLoading ? "Updating..." : "Save Changes"}
+                {isSaving ? "Saving…" : "Save Changes"}
               </button>
             </div>
           </form>
+
+          {/* ── Password change form ───────────────────────────────────────────── */}
+          <section className="border-t pt-8">
+            <h2 className="text-xl font-semibold mb-4">Change Password</h2>
+            <form onSubmit={handlePasswordSubmit} className="space-y-4 max-w-md">
+              <Field label="Current Password">
+                <input
+                  type="password"
+                  name="currentPassword"
+                  value={passwordFields.currentPassword}
+                  onChange={handlePasswordChange}
+                  className="w-full p-2 border rounded-lg"
+                  autoComplete="current-password"
+                />
+              </Field>
+
+              <Field label="New Password">
+                <input
+                  type="password"
+                  name="newPassword"
+                  value={passwordFields.newPassword}
+                  onChange={handlePasswordChange}
+                  className="w-full p-2 border rounded-lg"
+                  autoComplete="new-password"
+                />
+              </Field>
+
+              <button
+                type="submit"
+                disabled={isChangingPassword}
+                className="px-6 py-2 rounded-lg font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {isChangingPassword ? "Updating…" : "Update Password"}
+              </button>
+            </form>
+          </section>
         </div>
       </main>
+    </div>
+  );
+}
+
+// ─── Helper ───────────────────────────────────────────────────────────────────
+
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {label}
+      </label>
+      {children}
     </div>
   );
 }

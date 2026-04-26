@@ -6,8 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Logo from "./Logo";
 import { Button } from "./ui/button";
 import { useState, useEffect, useRef } from "react";
-import { useAuthStore } from "@/lib/store/useAuthStore";
-import { AuthState } from "@/types/schema";
+import { getCurrentUser, logout, AuthUser } from "@/lib/actions/auth.actions";
 import { Route } from "next";
 
 const Navbar = () => {
@@ -16,7 +15,11 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { user, signout } = useAuthStore((state) => state as AuthState);
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    getCurrentUser().then(setUser);
+  }, []);
 
   const handleToggle = () => setIsOpen(!isOpen);
   const handleCloseMenu = () => setIsOpen(false);
@@ -51,7 +54,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     try {
-      await signout();
+      await logout();
       router.push("/");
     } catch (error) {
       console.error("Logout failed", error);
@@ -132,7 +135,7 @@ const Navbar = () => {
               {user ? (
                 <>
                   <Link
-                    href="/dashboard"
+                    href="/human-services/dashboard"
                     className="relative px-4 py-2 text-white/90 text-sm font-medium hover:text-white transition-all duration-300 group"
                   >
                     <span className="relative z-10 font-bold">Dashboard</span>
@@ -150,14 +153,14 @@ const Navbar = () => {
               ) : (
                 <>
                   <Link
-                    href="/signIn"
+                    href="/human-services/signIn"
                     className="relative px-5 py-2 text-white text-sm font-medium bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg transition-all duration-300 group overflow-hidden"
                   >
                     <span className="relative z-10 font-bold">Login</span>
                     <span className="absolute inset-0 bg-gradient-to-r from-[#5AC35A]/20 to-emerald-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
                   </Link>
                   <Link
-                    href="/signUp"
+                    href="/human-services/signUp"
                     className="relative px-5 py-2 text-white text-sm font-semibold bg-gradient-to-r from-[#5AC35A] to-emerald-500 rounded-lg transition-all duration-300 hover:shadow-lg hover:shadow-[#5AC35A]/50 hover:scale-105 overflow-hidden group"
                   >
                     <span className="relative z-10 font-bold">Sign Up</span>
@@ -200,7 +203,7 @@ const Navbar = () => {
               {user ? (
                 <>
                   <Link
-                    href="/dashboard"
+                    href="/human-services/dashboard"
                     onClick={handleCloseMenu}
                     className="relative px-4 py-3 text-white/90 hover:text-white transition-all duration-300 rounded-xl group"
                   >
@@ -220,7 +223,7 @@ const Navbar = () => {
               ) : (
                 <>
                   <Link
-                    href="/signIn"
+                    href="/human-services/signIn"
                     onClick={handleCloseMenu}
                     className="relative px-4 py-3 text-white font-medium bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl transition-all duration-300 text-center group overflow-hidden"
                   >
@@ -228,7 +231,7 @@ const Navbar = () => {
                     <span className="absolute inset-0 bg-gradient-to-r from-[#5AC35A]/20 to-emerald-400/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
                   </Link>
                   <Link
-                    href="/signUp"
+                    href="/human-services/signUp"
                     onClick={handleCloseMenu}
                     className="relative px-4 py-3 text-white font-semibold bg-gradient-to-r from-[#5AC35A] to-emerald-500 rounded-xl transition-all duration-300 hover:shadow-lg hover:shadow-[#5AC35A]/50 text-center group overflow-hidden"
                   >

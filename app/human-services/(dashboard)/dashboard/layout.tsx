@@ -6,6 +6,7 @@ import OverView from "@/components/OverView";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
+import { getCurrentUser, hasProfile } from "@/lib/actions/auth.actions";
 
 export default function DashboardLayout({
   children,
@@ -18,54 +19,45 @@ export default function DashboardLayout({
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [isChecking, setIsChecking] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const checkAuthAndProfile = async () => {
-      const token = localStorage.getItem("token");
-      const user = localStorage.getItem("user");
+      // getCurrentUser() reads the httpOnly JWT cookie server-side.
+      // Returns null when the user is not logged in.
+      const user = await getCurrentUser();
 
-      // Check authentication
-      if (!token || !user) {
-        router.replace("/signIn");
+      if (!user) {
+        router.replace("/human-services/signIn");
         return;
       }
 
-      try {
-        const userData = JSON.parse(user);
-
-        // Check if user has a profile
-        const response = await fetch(`http://localhost:8080/api/profiles/${userData.id}`, {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-
-        if (!response.ok) {
-          // No profile found, redirect to create profile
-          router.replace("/create-profile");
-          return;
-        }
-
-        // Profile exists, store it and continue
-        const profileData = await response.json();
-        localStorage.setItem("profile", JSON.stringify(profileData));
-
-        // All checks passed, show dashboard
-        setIsChecking(false);
-
-      } catch (error) {
-        console.error("Error checking profile:", error);
-        // On error, redirect to create profile to be safe
-        router.replace("/create-profile");
+      // Admins don't need a profile — send them to the admin panel.
+      if (user.role === "ADMIN") {
+        router.replace("/human-services/admin");
+        return;
       }
+
+      // hasProfile() calls GET /api/profiles/{id} with the cookie automatically.
+      // Retry once in case the profile was just created and DB write is in flight.
+      let profileExists = await hasProfile(user.id);
+      if (!profileExists) {
+        await new Promise((r) => setTimeout(r, 400));
+        profileExists = await hasProfile(user.id);
+      }
+
+      if (!profileExists) {
+        router.replace("/human-services/create-profile");
+        return;
+      }
+
+      setIsAdmin(false);
+      setIsChecking(false);
     };
 
     checkAuthAndProfile();
   }, [router]);
 
-  // Show loading while checking authentication and profile
   if (isChecking) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -80,7 +72,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <DashboardNavBar>
+    <DashboardNavBar isAdmin={isAdmin}>
       <OverView>
         {children}
         <Toaster />

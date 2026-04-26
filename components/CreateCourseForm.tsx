@@ -1,16 +1,21 @@
 "use client";
 
 import { useCreateCourse } from "@/lib/hooks/useCreateCourse";
-import { Courses, UserInfo } from "@/types/schema";
+import { Courses } from "@/types/schema";
 import React, { useEffect, useState } from "react";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { Button } from "./ui/button";
-import { useAuthStore } from "@/lib/store/useAuthStore";
+import { getCurrentUser, AuthUser } from "@/lib/actions/auth.actions";
 
 const CreateCourseForm = () => {
-  const { user } = useAuthStore((state) => state as unknown as UserInfo);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    getCurrentUser().then(setAuthUser);
+  }, []);
+
   const [course, setCourse] = useState<Courses>({
     course_id: "",
     user_id: "", // You should set this based on the logged-in user's ID
@@ -25,14 +30,13 @@ const CreateCourseForm = () => {
   });
 
   useEffect(() => {
-    if (course.user_id) {
-      // Update the user_id in the course object
+    if (authUser?.id) {
       setCourse((prevCourse) => ({
         ...prevCourse,
-        user_id: user?.user_id || "",
+        user_id: authUser.id,
       }));
     }
-  }, [course.user_id, user?.user_id]);
+  }, [authUser?.id]);
 
   // Handle file change (image file)
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,8 +105,8 @@ const CreateCourseForm = () => {
       <h1 className="text-2xl font-bold mb-6 text-gray-800">
         Create a New Course
       </h1>
-      {user && (
-        <p className="text-sm text-gray-600 mb-4">Logged in as: {user.email}</p>
+      {authUser && (
+        <p className="text-sm text-gray-600 mb-4">Logged in as: {authUser.email}</p>
       )}
 
       {/* Course Title */}

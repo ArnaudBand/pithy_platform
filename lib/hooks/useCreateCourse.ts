@@ -1,19 +1,19 @@
-import { Courses, UserInfo } from "@/types/schema";
+import { Courses } from "@/types/schema";
 import { useFetch } from "./useFetch";
-import { useAuthStore } from "../store/useAuthStore";
+import { getCurrentUser } from "@/lib/actions/auth.actions";
 
 export const useCreateCourse = () => {
   const { data, error, loading, fetchData } = useFetch();
-  const { user } = useAuthStore((state) => state as unknown as UserInfo);
 
   const handleSubmit = async (course: Courses) => {
-    if (!user?.user_id) {
+    const user = await getCurrentUser();
+    if (!user?.id) {
       throw new Error("User not logged in");
     }
 
     const newCourse = {
       ...course,
-      user_id: user?.user_id,
+      user_id: user.id,
     };
 
     const result = await fetchData(

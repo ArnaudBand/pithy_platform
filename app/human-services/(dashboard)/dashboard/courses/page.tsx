@@ -1,16 +1,9 @@
-import React from "react";
-import CourseView from "@/components/courseView";
+import { getAllCourses } from "@/lib/actions/course.actions";
+import CoursesPageClient from "@/components/CoursesPageClient";
 
-const CoursePage = () => {
-  return (
-    <div className="flex h-full">
-      <div className="w-full no-scrollbar">
-        <div className="flex items-center justify-between">
-          <CourseView />
-        </div>
-      </div>
-    </div>
-  );
-};
+export default async function CoursesPage() {
+  const result = await getAllCourses();
+  const courses = result.success ? result.courses : [];
 
-export default CoursePage;
+  return <CoursesPageClient courses={courses} />;
+}

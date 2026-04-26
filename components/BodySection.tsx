@@ -53,7 +53,7 @@ const BodySection = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {/* Jobs Button */}
                 <Button
-                  onClick={() => router.push("/signIn")}
+                  onClick={() => router.push("/human-services/signIn")}
                   className="group relative bg-gradient-to-br from-white/10 to-white/5 hover:from-[#5AC35A]/20 hover:to-[#5AC35A]/10 border border-white/20 hover:border-[#5AC35A]/50 backdrop-blur-xl rounded-2xl p-6 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#5AC35A]/20 overflow-hidden"
                 >
                   <div className="relative z-10 flex flex-col items-center gap-3">
@@ -66,7 +66,7 @@ const BodySection = () => {
 
                 {/* Scholarships Button */}
                 <Button
-                  onClick={() => router.push("/signIn")}
+                  onClick={() => router.push("/human-services/signIn")}
                   className="group relative bg-gradient-to-br from-white/10 to-white/5 hover:from-[#5AC35A]/20 hover:to-[#5AC35A]/10 border border-white/20 hover:border-[#5AC35A]/50 backdrop-blur-xl rounded-2xl p-6 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#5AC35A]/20 overflow-hidden"
                 >
                   <div className="relative z-10 flex flex-col items-center gap-3">
@@ -79,7 +79,7 @@ const BodySection = () => {
 
                 {/* Fundings Button */}
                 <Button
-                  onClick={() => router.push("/signIn")}
+                  onClick={() => router.push("/human-services/signIn")}
                   className="group relative bg-gradient-to-br from-white/10 to-white/5 hover:from-[#5AC35A]/20 hover:to-[#5AC35A]/10 border border-white/20 hover:border-[#5AC35A]/50 backdrop-blur-xl rounded-2xl p-6 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#5AC35A]/20 overflow-hidden"
                 >
                   <div className="relative z-10 flex flex-col items-center gap-3">

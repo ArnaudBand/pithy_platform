@@ -1,13 +1,12 @@
 "use client";
 
 import React, { useState } from "react";
-import { searchJobs } from "@/lib/actions/user.actions";
-import { Job } from "@/types/schema";
+import { searchJobs, getAllJobs, JobSummaryDTO } from "@/lib/actions/job.actions";
 import { Search, MapPin, Building, ChevronDown, X } from "lucide-react";
 import { toast } from "react-hot-toast";
 
 interface JobSearchProps {
-  onSearchResults: (jobs: Job[]) => void;
+  onSearchResults: (jobs: JobSummaryDTO[]) => void;
   setLoading: (loading: boolean) => void;
 }
 
@@ -20,17 +19,22 @@ const JobSearch = ({ onSearchResults, setLoading }: JobSearchProps) => {
   // Handle search submission
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    
+
     if (!country && !location && !title) {
       toast.error("Please enter at least one search criteria");
       return;
     }
-    
+
     setLoading(true);
     try {
-      const results = await searchJobs(country, location, title);
-      onSearchResults(results);
-      toast.success(`Found ${results.length} matching positions`);
+      const result = await searchJobs({
+        keyword: title || undefined,
+        location: location || country || undefined,
+      });
+      if (!result.success) throw new Error(result.message);
+      const jobs = result.data?.content ?? [];
+      onSearchResults(jobs);
+      toast.success(`Found ${jobs.length} matching positions`);
     } catch (error) {
       console.error("Search failed:", error);
       toast.error("Search failed. Please try again.");
@@ -39,19 +43,17 @@ const JobSearch = ({ onSearchResults, setLoading }: JobSearchProps) => {
     }
   };
 
-  // Reset search fields and trigger refetch of all jobs
+  // Reset search fields and reload all jobs
   const handleReset = () => {
     setCountry("");
     setLocation("");
     setTitle("");
     setLoading(true);
-    // Trigger search with no params to get all jobs
-    searchJobs().then(results => {
-      onSearchResults(results);
+    getAllJobs().then((result) => {
+      onSearchResults(result.data?.content ?? []);
       toast.success("Search reset");
       setLoading(false);
-    }).catch(error => {
-      console.error("Reset failed:", error);
+    }).catch(() => {
       toast.error("Reset failed. Please try again.");
       setLoading(false);
     });

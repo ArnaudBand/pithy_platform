@@ -2,28 +2,15 @@
 
 import React, { useState } from "react";
 import Posts from "./Posts";
-import SearchResults from "./SearchResults";
 import { CircleUserRound, Search, X } from "lucide-react";
 import { Button } from "./ui/button";
-import { searchPosts } from "@/lib/actions/user.actions";
-import { PostWithUser } from "@/types/schema";
-
-interface SearchResults {
-  posts: PostWithUser[];
-  totalPosts: number;
-  currentPage: number;
-  totalPages: number;
-}
+import { PostDTO } from "@/lib/actions/post.actions";
+import toast, { Toaster } from "react-hot-toast";
 
 const ShareSomething = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState<SearchResults | null>(
-    null,
-  );
-  const [page, setPage] = useState(1);
-  const [limit] = useState(10);
-  const [searchMode, setSearchMode] = useState(false);
+  const [, setSearchMode] = useState(false);
+  const [newPost] = useState<PostDTO | null>(null);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -32,29 +19,13 @@ const ShareSomething = () => {
     }
   };
 
-  const handleSearch = async () => {
+  const handleSearch = () => {
     if (!searchTerm.trim()) {
       clearSearch();
       return;
     }
-
-    setIsSearching(true);
-    setSearchMode(true);
-
-    try {
-      const results = await searchPosts({
-        searchTerm: searchTerm.trim(),
-        page,
-        limit,
-        sortBy: "recent",
-      });
-
-      setSearchResults(results);
-    } catch (error) {
-      console.error("Error searching posts:", error);
-    } finally {
-      setIsSearching(false);
-    }
+    // Search is not yet migrated to the new backend — coming soon.
+    toast("Search is coming soon!", { icon: "🔍" });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -65,35 +36,13 @@ const ShareSomething = () => {
 
   const clearSearch = () => {
     setSearchTerm("");
-    setSearchResults(null);
-    setPage(1);
     setSearchMode(false);
-  };
-
-  const handlePageChange = async (newPage: number) => {
-    if (!searchTerm.trim() || newPage === page) return;
-
-    setIsSearching(true);
-    setPage(newPage);
-
-    try {
-      const results = await searchPosts({
-        searchTerm: searchTerm.trim(),
-        page: newPage,
-        limit,
-        sortBy: "recent",
-      });
-
-      setSearchResults(results);
-    } catch (error) {
-      console.error("Error searching posts:", error);
-    } finally {
-      setIsSearching(false);
-    }
   };
 
   return (
     <div className="flex flex-col no-scrollbar items-center justify-center max-h-screen mt-4">
+      <Toaster />
+
       {/* Search Bar */}
       <div className="flex flex-col bg-white text-black rounded-lg shadow-md p-2 w-full mt-2">
         <div className="flex items-center justify-center">
@@ -105,7 +54,7 @@ const ShareSomething = () => {
           <div className="relative flex-1 mx-2">
             <input
               type="text"
-              placeholder="Search Posts"
+              placeholder="Search Posts (coming soon)"
               className="border border-gray-300 rounded-lg w-full py-1 px-2 focus:outline-none focus:ring-2 focus:ring-[#5AC35A]"
               value={searchTerm}
               onChange={handleSearchChange}
@@ -124,72 +73,23 @@ const ShareSomething = () => {
           <Button
             className="bg-gradient-to-t from-[#5AC35A] to-[#00AE76] text-white rounded-lg py-1 px-2 flex-shrink-0 hover:bg-gradient-to-tr"
             onClick={handleSearch}
-            disabled={isSearching}
           >
             <Search size={16} className="mr-2" />
-            {isSearching ? "Searching..." : "Search"}
+            Search
           </Button>
         </div>
-
-        {searchMode && searchResults && (
-          <div className="flex justify-between items-center mt-2 px-2">
-            <p className="text-sm text-gray-600">
-              {searchResults.totalPosts > 0
-                ? `Found ${searchResults.totalPosts} result${searchResults.totalPosts !== 1 ? "s" : ""} for "${searchTerm}"`
-                : `No results found for "${searchTerm}"`}
-            </p>
-            <button
-              onClick={clearSearch}
-              className="text-sm text-[#00AE76] hover:underline"
-            >
-              Clear search
-            </button>
-          </div>
-        )}
       </div>
 
-      {/* Content Area */}
+      {/* Create Post
+      {!searchMode && (
+        <div className="w-full mt-4">
+          <CreatePosts onPostCreated={(post) => setNewPost(post)} />
+        </div>
+      )} */}
+
+      {/* Posts Feed */}
       <div className="overflow-y-auto no-scrollbar h-full mt-8 w-full">
-        {searchMode ? (
-          <>
-            {/* Search Results */}
-            <SearchResults
-              searchPosts={searchResults?.posts || []}
-              loading={isSearching}
-              searchTerm={searchTerm}
-            />
-
-            {/* Pagination */}
-            {searchResults && searchResults.totalPages > 1 && (
-              <div className="flex justify-center mt-4 mb-8 gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(page - 1)}
-                  disabled={page === 1 || isSearching}
-                >
-                  Previous
-                </Button>
-
-                <span className="flex items-center px-2">
-                  Page {searchResults.currentPage} of {searchResults.totalPages}
-                </span>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePageChange(page + 1)}
-                  disabled={page === searchResults.totalPages || isSearching}
-                >
-                  Next
-                </Button>
-              </div>
-            )}
-          </>
-        ) : (
-          /* Regular Posts */
-          <Posts />
-        )}
+        <Posts newPost={newPost} />
       </div>
     </div>
   );

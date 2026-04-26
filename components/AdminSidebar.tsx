@@ -7,46 +7,94 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   FaHome,
   FaBook,
-  FaQuestionCircle,
   FaBriefcase,
   FaMoneyCheckAlt,
   FaGraduationCap,
+  FaUsers,
+  FaQuestionCircle,
+  FaChevronDown,
+  FaChevronRight,
 } from "react-icons/fa";
-import { Gem, Joystick, LogOut } from "lucide-react";
-import { useAuthStore } from "@/lib/store/useAuthStore";
-import { AuthState } from "@/types/schema";
+import { Brain, Gem, Joystick, Layers, LogOut, ClipboardList, BarChart2 } from "lucide-react";
+import { logout } from "@/lib/actions/auth.actions";
 
-const links = [
-  { name: "Home", path: "/admin", icon: <FaHome /> },
-  { name: "Dashboard", path: "/dashboard", icon: <Joystick /> },
-  { name: "Add Course", path: "/admin/addcourse", icon: <FaBook /> },
-  { name: "Add Job", path: "/admin/add_job", icon: <FaBriefcase /> },
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface SimpleLink {
+  kind: "link";
+  name: string;
+  path: string;
+  icon: React.ReactNode;
+}
+
+interface DropdownGroup {
+  kind: "group";
+  name: string;
+  icon: React.ReactNode;
+  children: { name: string; path: string; icon: React.ReactNode }[];
+}
+
+type NavItem = SimpleLink | DropdownGroup;
+
+// ─── Nav structure ────────────────────────────────────────────────────────────
+
+const navItems: NavItem[] = [
+  { kind: "link", name: "Home",            path: "/human-services/admin",            icon: <FaHome /> },
+  { kind: "link", name: "Dashboard",       path: "/human-services/dashboard",         icon: <Joystick size={16} /> },
+  { kind: "link", name: "Manage Users",    path: "/human-services/admin/users",       icon: <FaUsers /> },
+  { kind: "link", name: "Manage Courses",  path: "/human-services/admin/courses",     icon: <FaBook /> },
+  { kind: "link", name: "Manage Jobs",     path: "/human-services/admin/jobs",        icon: <FaBriefcase /> },
+  { kind: "link", name: "Manage Fundings", path: "/human-services/admin/fundings",    icon: <FaMoneyCheckAlt /> },
   {
-    name: "Add Funding",
-    path: "/admin/add_funding",
-    icon: <FaMoneyCheckAlt />,
-  },
-  {
-    name: "Add Scholarship",
-    path: "/admin/add_scholarship",
+    kind: "link",
+    name: "Manage Scholarships",
+    path: "/human-services/admin/scholarships",
     icon: <FaGraduationCap />,
   },
+  { kind: "link", name: "Manage Payments", path: "/human-services/admin/payments",   icon: <Gem size={16} /> },
+
+  // ── Assessment dropdown ───────────────────────────────────────────────────
   {
-    name: "Payments",
-    path: "/admin/payment",
-    icon: <Gem />,
+    kind: "group",
+    name: "Manage Assessment",
+    icon: <Brain size={16} />,
+    children: [
+      {
+        name: "Assessment Questions",
+        path: "/human-services/admin/questions",
+        icon: <FaQuestionCircle />,
+      },
+      {
+        name: "Assessment Results",
+        path: "/human-services/admin/assessments",
+        icon: <BarChart2 size={14} />,
+      },
+    ],
   },
+
+  // ── Scenario Assessment dropdown ──────────────────────────────────────────
   {
-    name: "Questions",
-    path: "/admin/questions",
-    icon: <FaQuestionCircle />,
+    kind: "group",
+    name: "Manage Scenario Assessment",
+    icon: <Layers size={16} />,
+    children: [
+      {
+        name: "Scenario Questions",
+        path: "/human-services/admin/scenario-questions",
+        icon: <FaQuestionCircle />,
+      },
+      {
+        name: "Scenario Results",
+        path: "/human-services/admin/scenario-assessments",
+        icon: <BarChart2 size={14} />,
+      },
+    ],
   },
-  {
-    name: "View Reports",
-    path: "/admin/reports",
-    icon: <FaBook />,
-  },
+
+  { kind: "link", name: "View Reports", path: "/human-services/admin/reports", icon: <ClipboardList size={16} /> },
 ];
+
+// ─── Component ────────────────────────────────────────────────────────────────
 
 interface AdminSidebarProps {
   children?: React.ReactNode;
@@ -54,23 +102,39 @@ interface AdminSidebarProps {
 
 const AdminSidebar: React.FC<AdminSidebarProps> = ({ children }) => {
   const pathname = usePathname();
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const { signout } = useAuthStore((state) => state as AuthState);
-
   const router = useRouter();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const toggleSidebar = () => {
-    setIsCollapsed(!isCollapsed);
+  // Track which dropdown groups are open (by group name)
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    // Auto-open the group that contains the current path
+    const initial: Record<string, boolean> = {};
+    navItems.forEach((item) => {
+      if (item.kind === "group") {
+        const active = item.children.some((c) => pathname === c.path || pathname.startsWith(c.path));
+        if (active) initial[item.name] = true;
+      }
+    });
+    return initial;
+  });
+
+  const toggleGroup = (name: string) => {
+    setOpenGroups((prev) => ({ ...prev, [name]: !prev[name] }));
   };
 
   const handleLogout = async () => {
     try {
-      await signout();
-      router.push("/");
+      await logout();
+      router.push("/human-services/signIn");
     } catch (error) {
       console.error("Logout failed", error);
     }
   };
+
+  const linkClass = (path: string) =>
+    `flex items-center px-4 py-3 hover:bg-green-500 hover:text-white/90 transition-colors ${
+      pathname === path ? "bg-green-500 text-white/90" : ""
+    }`;
 
   return (
     <div className="flex space-x-4 w-full">
@@ -80,33 +144,81 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ children }) => {
           isCollapsed ? "w-16" : "w-64"
         }`}
       >
-        {/* Sidebar Header */}
+        {/* Header */}
         <div className="p-4 text-lg font-bold border-b border-green-500 grid justify-items-end">
           <button
-            onClick={toggleSidebar}
+            onClick={() => setIsCollapsed((v) => !v)}
             className="p-2 hover:bg-green-500 rounded-lg"
           >
             {isCollapsed ? "«" : "»"}
           </button>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="flex-1 flex flex-col">
-          {links.map((link) => (
-            <Link
-              key={link.path}
-              href={link.path as any}
-              className={`flex items-center px-4 py-3 hover:bg-green-500 hover:text-white/90 transition-colors ${
-                pathname === link.path ? "bg-green-500 text-white/90" : ""
-              }`}
-            >
-              <span className="text-xl">{link.icon}</span>
-              {!isCollapsed && <span className="ml-3">{link.name}</span>}
-            </Link>
-          ))}
+        {/* Navigation */}
+        <nav className="flex-1 flex flex-col overflow-y-auto">
+          {navItems.map((item) => {
+            if (item.kind === "link") {
+              return (
+                <Link key={item.path} href={item.path as any} className={linkClass(item.path)}>
+                  <span className="text-xl flex-shrink-0">{item.icon}</span>
+                  {!isCollapsed && <span className="ml-3 truncate">{item.name}</span>}
+                </Link>
+              );
+            }
+
+            // Dropdown group
+            const isOpen = !!openGroups[item.name];
+            const hasActiveChild = item.children.some(
+              (c) => pathname === c.path || pathname.startsWith(c.path)
+            );
+
+            return (
+              <div key={item.name}>
+                {/* Group header button */}
+                <button
+                  onClick={() => !isCollapsed && toggleGroup(item.name)}
+                  className={`w-full flex items-center px-4 py-3 hover:bg-green-500 hover:text-white/90 transition-colors text-left ${
+                    hasActiveChild ? "bg-green-50 text-green-700 font-medium" : ""
+                  }`}
+                >
+                  <span className="text-xl flex-shrink-0">{item.icon}</span>
+                  {!isCollapsed && (
+                    <>
+                      <span className="ml-3 flex-1 truncate text-sm">{item.name}</span>
+                      <span className="ml-1 flex-shrink-0">
+                        {isOpen ? (
+                          <FaChevronDown size={11} />
+                        ) : (
+                          <FaChevronRight size={11} />
+                        )}
+                      </span>
+                    </>
+                  )}
+                </button>
+
+                {/* Children — shown when open and not collapsed */}
+                {isOpen && !isCollapsed && (
+                  <div className="bg-slate-50 border-l-2 border-green-400 ml-4">
+                    {item.children.map((child) => (
+                      <Link
+                        key={child.path}
+                        href={child.path as any}
+                        className={`flex items-center px-4 py-2.5 hover:bg-green-500 hover:text-white/90 transition-colors text-sm ${
+                          pathname === child.path ? "bg-green-500 text-white/90" : "text-slate-600"
+                        }`}
+                      >
+                        <span className="text-base flex-shrink-0">{child.icon}</span>
+                        <span className="ml-3 truncate">{child.name}</span>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
-        {/* Sidebar Footer */}
+        {/* Footer */}
         <div className="p-4 border-t border-green-500">
           <button
             onClick={handleLogout}
@@ -122,9 +234,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ children }) => {
       </aside>
 
       {/* Scrollable Content Area */}
-      <div className="flex-1 overflow-y-auto w-full">
-        {children}
-      </div>
+      <div className="flex-1 overflow-y-auto w-full">{children}</div>
     </div>
   );
 };

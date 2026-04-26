@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "./ui/button";
 import { Mail, RefreshCw } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
+import { resendVerification } from "@/lib/actions/auth.actions";
 
-const VerifyEmailPending = ({ email }) => {
+// email can be passed as a prop (legacy) or read from the ?email= search param
+const VerifyEmailPending = ({ email: emailProp }) => {
+    const searchParams = useSearchParams();
+    const email = emailProp || searchParams.get("email") || "";
     const [isResending, setIsResending] = useState(false);
 
     const handleResendEmail = async () => {
@@ -16,26 +21,14 @@ const VerifyEmailPending = ({ email }) => {
 
         setIsResending(true);
         try {
-            const response = await fetch(
-                `http://localhost:8080/api/users/resend-verification?email=${encodeURIComponent(email)}`,
-                {
-                    method: "POST",
-                }
-            );
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || "Failed to resend verification email");
+            const result = await resendVerification(email);
+            if (!result.success) {
+                toast.error(result.message ?? "Failed to resend verification email.");
+                return;
             }
-
-            toast.success("Verification email sent! Please check your inbox.");
-        } catch (error) {
-            const errorMessage =
-                error instanceof Error
-                    ? error.message
-                    : "Failed to resend email. Please try again.";
-            toast.error(errorMessage);
+            toast.success(result.message ?? "Verification email sent! Check your inbox.");
+        } catch {
+            toast.error("Failed to resend email. Please try again.");
         } finally {
             setIsResending(false);
         }
@@ -115,7 +108,7 @@ const VerifyEmailPending = ({ email }) => {
                     <p className="text-sm text-gray-600">
                         Already verified?{" "}
                         <a
-                            href="/signIn"
+                            href="/human-services/signIn"
                             className="text-green-600 font-medium hover:underline"
                         >
                             Sign in here

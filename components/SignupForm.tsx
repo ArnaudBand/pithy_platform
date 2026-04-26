@@ -7,6 +7,7 @@ import { MoveLeft, Eye, EyeOff } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { userRegistrationSchema, UserRegistration } from "@/lib/validations/auth-schema";
 import { z } from "zod";
+import { register } from "@/lib/actions/auth.actions";
 
 const SignupForm = () => {
   const [formData, setFormData] = useState<UserRegistration>({
@@ -24,13 +25,11 @@ const SignupForm = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-
-    // Clear error for this field when user starts typing
     if (formErrors[name]) {
       setFormErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[name];
-        return newErrors;
+        const next = { ...prev };
+        delete next[name];
+        return next;
       });
     }
   };
@@ -39,23 +38,14 @@ const SignupForm = () => {
     e.preventDefault();
     setFormErrors({});
 
-    // Validate form
     try {
       userRegistrationSchema.parse(formData);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const newErrors: Record<string, string> = {};
-        error.errors.forEach((err) => {
-          const field = err.path[0];
-          newErrors[field as string] = err.message;
-        });
-        setFormErrors(newErrors);
-
-        // Show first error in toast
-        const errorKeys = Object.keys(newErrors);
-        if (errorKeys.length > 0) {
-          toast.error(newErrors[errorKeys[0]]);
-        }
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        const errors: Record<string, string> = {};
+        err.errors.forEach((e) => { errors[String(e.path[0])] = e.message; });
+        setFormErrors(errors);
+        toast.error(Object.values(errors)[0]);
         return;
       }
     }
@@ -63,38 +53,23 @@ const SignupForm = () => {
     setIsLoading(true);
 
     try {
-      // Call your backend API
-      const response = await fetch("http://localhost:8080/api/users/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-        }),
-      });
+      const result = await register(formData.email, formData.password);
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Registration failed");
+      if (!result.success) {
+        toast.error(result.message ?? "Registration failed. Please try again.");
+        return;
       }
 
-      // Success
-      toast.success(data.message || "Registration successful! Please check your email to verify your account.");
+      toast.success(result.message ?? "Account created! Check your email to verify.");
 
-      // Redirect to verification pending page after 2 seconds
+      // Pass the email so the pending page can offer one-click resend.
       setTimeout(() => {
-        router.push("/verify-email-pending");
-      }, 2000);
-
-    } catch (error) {
-      const errorMessage = error instanceof Error
-        ? error.message
-        : "Registration failed. Please try again.";
-      toast.error(errorMessage);
-      console.error("Registration error:", error);
+        router.push(
+          `/human-services/verify-email-pending?email=${encodeURIComponent(formData.email)}`
+        );
+      }, 1800);
+    } catch {
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -121,7 +96,7 @@ const SignupForm = () => {
   return (
     <div className="w-full min-h-screen mx-auto p-4 sm:p-6 bg-white flex justify-center items-center flex-col relative">
       <Button
-        onClick={() => router.push("/")}
+        onClick={() => router.push("/human-services/signIn")}
         className="absolute top-4 right-4 bg-transparent text-gray-800 hover:text-zinc-200 hover:bg-green-500"
       >
         <MoveLeft className="mr-2" />
@@ -265,7 +240,7 @@ const SignupForm = () => {
             <p className="text-sm text-gray-600">
               Already have an account?{" "}
               <a
-                href="/signIn"
+                href="/human-services/signIn"
                 className="text-green-600 font-medium hover:underline"
               >
                 Sign in

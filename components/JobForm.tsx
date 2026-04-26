@@ -1,61 +1,66 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Job, UserInfo } from "@/types/schema";
+import { useEffect, useState, useTransition } from "react";
 import {
-  getJobs,
+  getMyJobs,
+  createJob,
   updateJob,
   deleteJob,
-  createJob,
-} from "@/lib/actions/user.actions";
+  JobSummaryDTO,
+  JobCreatePayload,
+  JobUpdatePayload,
+} from "@/lib/actions/job.actions";
 import { Button } from "./ui/button";
-import { useAuthStore } from "@/lib/store/useAuthStore";
 import toast, { Toaster } from "react-hot-toast";
+import JobApplicants from "./JobApplicants";
 
-// Optional: Create a context for job management if you want to use it across multiple components
-// This is a simplified version that combines both components
+const emptyForm: JobCreatePayload = {
+  company: "",
+  title: "",
+  description: "",
+  link: "",
+  location: "",
+  salaryRange: "",
+  jobType: "",
+  expiresAt: "",
+};
 
 const JobDashboard = () => {
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobs, setJobs] = useState<JobSummaryDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editingJob, setEditingJob] = useState<Job | null>(null);
-  const [editFormData, setEditFormData] = useState<Job | null>(null);
-  const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // Create form
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [formData, setFormData] = useState<Job>({
-    job_id: "",
-    user_id: "",
-    job_title: "",
-    job_description: "",
-    location_of_work: "",
-    employer: "",
-    job_earlier: "",
-    country_of_work: "",
-    closing_date: new Date().toISOString().split("T")[0],
-    application_link: "",
-  });
-  const [formSuccess, setFormSuccess] = useState<string | null>(null);
-  const [formLoading, setFormLoading] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formData, setFormData] = useState<JobCreatePayload>(emptyForm);
 
-  const { user } = useAuthStore((state) => state as unknown as UserInfo);
+  // Edit form
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editData, setEditData] = useState<JobUpdatePayload>({});
 
-  // Fetch jobs when component mounts
+  // Delete confirm
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  // Applicants modal
+  const [applicantsJob, setApplicantsJob] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+
+  const [isPending, startTransition] = useTransition();
+
+  // ─── Fetch jobs posted by current admin ────────────────────────────────────
+
   useEffect(() => {
     const fetchJobs = async () => {
       setLoading(true);
       try {
-        const jobsData = await getJobs();
-        if (jobsData) {
-          // Ensure jobsData is always treated as an array
-          const jobsArray = jobsData.documents || [];
-          toast.success("Jobs fetched successfully");
-          setJobs(jobsArray);
-        }
-      } catch (error) {
-        console.error("Failed to fetch jobs:", error);
+        const result = await getMyJobs();
+        if (!result.success) throw new Error(result.message);
+        setJobs(result.data?.content ?? []);
+        toast.success("Jobs loaded");
+      } catch (err) {
+        console.error(err);
         toast.error("Failed to fetch jobs");
         setError("Failed to load jobs. Please try again.");
       } finally {
@@ -63,173 +68,114 @@ const JobDashboard = () => {
       }
     };
     fetchJobs();
-  }, [user]);
+  }, []);
 
-  useEffect(() => {
-    // When the user data is fetched, update the formData with the user_id
-    if (user) {
-      setFormData((prevState) => ({
-        ...prevState,
-        user_id: user?.user_id,
-      }));
-    }
-  }, [user]);
+  // ─── Create ────────────────────────────────────────────────────────────────
 
-  // Form handling for creating a new job
-  const handleFormInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  const handleCreateInput = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prevState: Job) => ({
-      ...prevState,
-      [name]:
-        name === "closing_date"
-          ? new Date(value).toISOString().split("T")[0]
-          : value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleCreateSubmit = async (e: React.FormEvent) => {
+  const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setFormLoading(true);
-    setFormError(null);
-    setFormSuccess(null);
-
-    try {
-      if (!user) {
-        throw new Error("User not found. Please log in.");
-      }
-
-      // Ensure user_id is set
-      const jobToCreate = {
+    startTransition(async () => {
+      const result = await createJob({
         ...formData,
-        user_id: user.user_id,
-      };
-
-      // Create job document
-      const createdJob = await createJob(jobToCreate);
-
-      if (createdJob) {
-        setFormSuccess("Job created successfully!");
-
-        // Add the new job to the jobs list immediately
-        setJobs((prevJobs) => [...prevJobs, createdJob]);
-
-        // Reset form
-        setFormData({
-          job_id: "",
-          user_id: user.user_id,
-          job_title: "",
-          job_description: "",
-          location_of_work: "",
-          employer: "",
-          job_earlier: "",
-          country_of_work: "",
-          closing_date: new Date().toISOString().split("T")[0],
-          application_link: "",
-        });
-
-        // Close the form after a short delay
-        setTimeout(() => {
-          setShowCreateForm(false);
-          setFormSuccess(null);
-        }, 2000);
+        expiresAt: formData.expiresAt
+          ? new Date(formData.expiresAt).toISOString().slice(0, 19)
+          : undefined,
+      });
+      if (!result.success) {
+        toast.error(result.message ?? "Failed to create job");
+        return;
       }
-    } catch (error) {
-      setFormError("Failed to create job. Please try again.");
-      console.error(error);
-    } finally {
-      setFormLoading(false);
-    }
+      toast.success("Job created successfully!");
+      // Optimistically add to list using summary shape
+      const created = result.job;
+      setJobs((prev) => [
+        {
+          id: created.id,
+          company: created.company,
+          title: created.title,
+          location: created.location,
+          jobType: created.jobType,
+          status: created.status,
+          applicationCount: created.applicationCount,
+          viewCount: created.viewCount,
+          createdAt: created.createdAt,
+          active: created.active,
+        },
+        ...prev,
+      ]);
+      setFormData(emptyForm);
+      setShowCreateForm(false);
+    });
   };
 
-  // Editing job functionality
-  const handleEditClick = (job: Job) => {
-    setEditingJob(job);
-    setEditFormData(job);
-    setUpdateSuccess(null);
+  // ─── Update ────────────────────────────────────────────────────────────────
+
+  const startEdit = (job: JobSummaryDTO) => {
+    setEditingId(job.id);
+    setEditData({
+      company: job.company,
+      title: job.title,
+      location: job.location,
+      jobType: job.jobType,
+    });
   };
 
-  const handleCancelEdit = () => {
-    setEditingJob(null);
-    setEditFormData(null);
-  };
-
-  const handleEditInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  const handleEditInput = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-
-    if (editFormData) {
-      setEditFormData({
-        ...editFormData,
-        [name]:
-          name === "closing_date"
-            ? new Date(value).toISOString().split("T")[0]
-            : value,
-      });
-    }
+    setEditData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleUpdateJob = async () => {
-    if (!editingJob || !editFormData) return;
-
-    setLoading(true);
-    try {
-      const result = await updateJob(editingJob.job_id, editFormData);
-      if (result) {
-        setUpdateSuccess("Job updated successfully!");
-        // Update the jobs list with the updated job
-        setJobs((prevJobs) =>
-          prevJobs.map((job) =>
-            job.job_id === editingJob.job_id
-              ? { ...job, ...editFormData }
-              : job,
-          ),
-        );
-        // Close edit form after short delay
-        setTimeout(() => {
-          setEditingJob(null);
-          setEditFormData(null);
-          setUpdateSuccess(null);
-        }, 2000);
+  const handleUpdate = () => {
+    if (!editingId) return;
+    startTransition(async () => {
+      const result = await updateJob(editingId, editData);
+      if (!result.success) {
+        toast.error(result.message ?? "Failed to update job");
+        return;
       }
-    } catch (error) {
-      setError("Failed to update job. Please try again.");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+      toast.success("Job updated successfully!");
+      setJobs((prev) =>
+        prev.map((j) =>
+          j.id === editingId
+            ? { ...j, ...editData }
+            : j
+        )
+      );
+      setEditingId(null);
+      setEditData({});
+    });
   };
 
-  // Delete job functionality
-  const handleDeleteConfirm = (jobId: string) => {
-    setDeleteConfirm(jobId);
+  // ─── Delete ────────────────────────────────────────────────────────────────
+
+  const handleDelete = (id: string) => {
+    startTransition(async () => {
+      const result = await deleteJob(id);
+      if (!result.success) {
+        toast.error(result.message ?? "Failed to delete job");
+        return;
+      }
+      toast.success("Job deleted");
+      setJobs((prev) => prev.filter((j) => j.id !== id));
+      setDeleteConfirmId(null);
+    });
   };
 
-  const handleDeleteCancel = () => {
-    setDeleteConfirm(null);
-  };
+  // ─── Render ────────────────────────────────────────────────────────────────
 
-  const handleDeleteJob = async (jobId: string) => {
-    setLoading(true);
-    try {
-      await deleteJob(jobId);
-      setJobs((prevJobs) => prevJobs.filter((job) => job.job_id !== jobId));
-      setDeleteConfirm(null);
-    } catch (error) {
-      setError("Failed to delete job. Please try again.");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Render loading state
   if (loading && jobs.length === 0 && !showCreateForm) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin h-8 w-8 border-4 border-green-500 rounded-full border-t-transparent"></div>
+        <div className="animate-spin h-8 w-8 border-4 border-green-500 rounded-full border-t-transparent" />
       </div>
     );
   }
@@ -238,17 +184,14 @@ const JobDashboard = () => {
     <div className="container mx-auto p-4 bg-white/80 rounded-lg shadow-md">
       <Toaster
         position="top-right"
-        reverseOrder={false}
-        toastOptions={{
-          className: "bg-black/50 text-green-200",
-          duration: 4000,
-        }}
+        toastOptions={{ className: "bg-black/50 text-green-200", duration: 4000 }}
       />
+
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-800">Job Dashboard</h2>
         <Button
           className="bg-green-600 hover:bg-green-700 text-white"
-          onClick={() => setShowCreateForm(!showCreateForm)}
+          onClick={() => setShowCreateForm((s) => !s)}
         >
           {showCreateForm ? "Cancel" : "Create New Job"}
         </Button>
@@ -258,210 +201,138 @@ const JobDashboard = () => {
         <div className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</div>
       )}
 
-      {/* Create Job Form */}
+      {/* ── Create form ── */}
       {showCreateForm && (
         <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200 mb-8">
           <h3 className="text-xl font-semibold mb-4">Create a New Job</h3>
-          {formSuccess && (
-            <div className="bg-green-100 text-green-700 p-3 rounded mb-4">
-              {formSuccess}
-            </div>
-          )}
-          {formError && (
-            <div className="bg-red-100 text-red-700 p-3 rounded mb-4">
-              {formError}
-            </div>
-          )}
-
           <form onSubmit={handleCreateSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label
-                  htmlFor="job_title"
-                  className="block text-sm font-medium text-black"
-                >
-                  Job Title
+                <label className="block text-sm font-medium text-black">
+                  Job Title *
                 </label>
                 <input
-                  id="job_title"
-                  name="job_title"
-                  placeholder="Job Title"
-                  value={formData.job_title}
-                  onChange={handleFormInputChange}
-                  className="w-full mt-1 p-2 border border-gray-300 text-black rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleCreateInput}
+                  className="w-full mt-1 p-2 border border-gray-300 text-black rounded-md"
                   required
                 />
               </div>
-
               <div>
-                <label
-                  htmlFor="employer"
-                  className="block text-sm font-medium text-black"
-                >
-                  Employer
+                <label className="block text-sm font-medium text-black">
+                  Company *
                 </label>
                 <input
-                  type="text"
-                  id="employer"
-                  name="employer"
-                  placeholder="Employer"
-                  value={formData.employer}
-                  onChange={handleFormInputChange}
-                  className="w-full mt-1 p-2 border border-gray-300 text-black rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  name="company"
+                  value={formData.company}
+                  onChange={handleCreateInput}
+                  className="w-full mt-1 p-2 border border-gray-300 text-black rounded-md"
+                  required
                 />
               </div>
             </div>
 
             <div>
-              <label
-                htmlFor="job_description"
-                className="block text-sm font-medium text-black"
-              >
-                Job Description
+              <label className="block text-sm font-medium text-black">
+                Description *
               </label>
               <textarea
-                id="job_description"
-                name="job_description"
-                placeholder="Job Description"
-                value={formData.job_description}
-                onChange={handleFormInputChange}
-                className="w-full mt-1 p-2 border border-gray-300 text-black rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                name="description"
+                value={formData.description}
+                onChange={handleCreateInput}
                 rows={4}
+                className="w-full mt-1 p-2 border border-gray-300 text-black rounded-md"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-black">
+                Application Link *
+              </label>
+              <input
+                type="url"
+                name="link"
+                value={formData.link}
+                onChange={handleCreateInput}
+                placeholder="https://..."
+                className="w-full mt-1 p-2 border border-gray-300 text-black rounded-md"
                 required
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label
-                  htmlFor="location_of_work"
-                  className="block text-sm font-medium text-black"
-                >
-                  Location of Work
+                <label className="block text-sm font-medium text-black">
+                  Location
                 </label>
                 <input
-                  type="text"
-                  id="location_of_work"
-                  name="location_of_work"
-                  placeholder="Location of Work"
-                  value={formData.location_of_work}
-                  onChange={handleFormInputChange}
-                  className="w-full mt-1 p-2 border border-gray-300 text-black rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  name="location"
+                  value={formData.location ?? ""}
+                  onChange={handleCreateInput}
+                  className="w-full mt-1 p-2 border border-gray-300 text-black rounded-md"
                 />
               </div>
-
               <div>
-                <label
-                  htmlFor="country_of_work"
-                  className="block text-sm font-medium text-black"
-                >
-                  Country of Work
+                <label className="block text-sm font-medium text-black">
+                  Job Type
                 </label>
-                <input
-                  type="text"
-                  id="country_of_work"
-                  name="country_of_work"
-                  placeholder="Country of Work"
-                  value={formData.country_of_work}
-                  onChange={handleFormInputChange}
-                  className="w-full mt-1 p-2 border border-gray-300 text-black rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                />
+                <select
+                  name="jobType"
+                  value={formData.jobType ?? ""}
+                  onChange={handleCreateInput}
+                  className="w-full mt-1 p-2 border border-gray-300 text-black rounded-md"
+                >
+                  <option value="">— Select —</option>
+                  <option value="FULL_TIME">Full Time</option>
+                  <option value="PART_TIME">Part Time</option>
+                  <option value="CONTRACT">Contract</option>
+                  <option value="INTERNSHIP">Internship</option>
+                  <option value="REMOTE">Remote</option>
+                </select>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label
-                  htmlFor="job_earlier"
-                  className="block text-sm font-medium text-black"
-                >
-                  Career Area
+                <label className="block text-sm font-medium text-black">
+                  Salary Range
                 </label>
                 <input
-                  type="text"
-                  id="job_earlier"
-                  name="job_earlier"
-                  placeholder="Career Area"
-                  value={formData.job_earlier}
-                  onChange={handleFormInputChange}
-                  className="w-full mt-1 p-2 border border-gray-300 text-black rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  name="salaryRange"
+                  value={formData.salaryRange ?? ""}
+                  onChange={handleCreateInput}
+                  placeholder="e.g. $50k – $70k"
+                  className="w-full mt-1 p-2 border border-gray-300 text-black rounded-md"
                 />
               </div>
-
               <div>
-                <label
-                  htmlFor="closing_date"
-                  className="block text-sm font-medium text-black"
-                >
-                  Closing Date
+                <label className="block text-sm font-medium text-black">
+                  Expires At
                 </label>
                 <input
                   type="date"
-                  id="closing_date"
-                  name="closing_date"
-                  value={formData.closing_date.toString().split("T")[0]}
-                  onChange={handleFormInputChange}
-                  className="w-full mt-1 p-2 border border-gray-300 text-black rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  name="expiresAt"
+                  value={formData.expiresAt ?? ""}
+                  onChange={handleCreateInput}
+                  className="w-full mt-1 p-2 border border-gray-300 text-black rounded-md"
                 />
               </div>
-            </div>
-
-            <div>
-              <label
-                htmlFor="application_link"
-                className="block text-sm font-medium text-black"
-              >
-                Application Link
-              </label>
-              <input
-                type="url"
-                id="application_link"
-                name="application_link"
-                placeholder="Application Link"
-                value={formData.application_link}
-                onChange={handleFormInputChange}
-                className="w-full mt-1 p-2 border border-gray-300 text-black rounded-md focus:ring-2 focus:ring-blue-500 focus:outline-none"
-              />
             </div>
 
             <Button
               type="submit"
-              className="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              disabled={formLoading}
+              disabled={isPending}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
             >
-              {formLoading ? (
-                <div className="flex items-center justify-center">
-                  <span>Creating Job...</span>
-                  <svg
-                    className="animate-spin h-5 w-5 ml-2 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0c4.418 0 8 3.582 8 8s-3.582 8-8 8v-4a4 4 0 00-4-4H4z"
-                    ></path>
-                  </svg>
-                </div>
-              ) : (
-                "Create Job"
-              )}
+              {isPending ? "Creating…" : "Create Job"}
             </Button>
           </form>
         </div>
       )}
 
-      {/* Job List Section */}
+      {/* ── Job list ── */}
       <div className="mt-6">
         <h3 className="text-xl font-semibold mb-4 text-black">
           {jobs.length > 0 ? "Your Jobs" : ""}
@@ -469,9 +340,7 @@ const JobDashboard = () => {
 
         {jobs.length === 0 && !showCreateForm ? (
           <div className="text-center py-8 bg-white rounded-lg shadow-md">
-            <p className="text-gray-600 mb-4">
-              You haven&apos;t posted any jobs yet.
-            </p>
+            <p className="text-gray-600 mb-4">No jobs posted yet.</p>
             <Button
               className="bg-blue-600 hover:bg-blue-700 text-white"
               onClick={() => setShowCreateForm(true)}
@@ -483,188 +352,154 @@ const JobDashboard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {jobs.map((job) => (
               <div
-                key={job.job_id}
+                key={job.id}
                 className="bg-white rounded-lg shadow-md p-6 border border-gray-200"
               >
-                {deleteConfirm === job.job_id ? (
+                {/* Delete confirmation */}
+                {deleteConfirmId === job.id ? (
                   <div className="space-y-4">
                     <p className="font-medium text-red-600">
-                      Are you sure you want to delete this job?
+                      Delete &ldquo;{job.title}&rdquo;?
                     </p>
                     <div className="flex space-x-2">
                       <Button
                         className="bg-red-600 hover:bg-red-700 text-white"
-                        onClick={() => handleDeleteJob(job.job_id)}
-                        disabled={loading}
+                        onClick={() => handleDelete(job.id)}
+                        disabled={isPending}
                       >
-                        Yes, Delete
+                        {isPending ? "Deleting…" : "Yes, Delete"}
                       </Button>
                       <Button
                         className="bg-gray-200 hover:bg-gray-300 text-gray-800"
-                        onClick={handleDeleteCancel}
-                        disabled={loading}
+                        onClick={() => setDeleteConfirmId(null)}
                       >
                         Cancel
                       </Button>
                     </div>
                   </div>
-                ) : editingJob && editingJob.job_id === job.job_id ? (
-                  <div className="space-y-4">
-                    {updateSuccess && (
-                      <div className="bg-green-100 text-green-700 p-2 rounded mb-4">
-                        {updateSuccess}
-                      </div>
-                    )}
 
+                /* Edit form */
+                ) : editingId === job.id ? (
+                  <div className="space-y-3">
                     <div>
-                      <label
-                        htmlFor="job_title"
-                        className="block text-sm font-medium text-gray-700"
-                      >
+                      <label className="text-sm font-medium text-gray-700">
                         Job Title
                       </label>
                       <input
-                        id="job_title"
-                        name="job_title"
-                        value={editFormData?.job_title || ""}
-                        onChange={handleEditInputChange}
+                        name="title"
+                        value={editData.title ?? ""}
+                        onChange={handleEditInput}
                         className="w-full mt-1 p-2 border border-gray-300 rounded-md"
-                        required
                       />
                     </div>
-
                     <div>
-                      <label
-                        htmlFor="job_description"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Job Description
+                      <label className="text-sm font-medium text-gray-700">
+                        Company
                       </label>
-                      <textarea
-                        id="job_description"
-                        name="job_description"
-                        value={editFormData?.job_description || ""}
-                        onChange={handleEditInputChange}
+                      <input
+                        name="company"
+                        value={editData.company ?? ""}
+                        onChange={handleEditInput}
                         className="w-full mt-1 p-2 border border-gray-300 rounded-md"
-                        rows={3}
-                        required
                       />
                     </div>
-
                     <div>
-                      <label
-                        htmlFor="location_of_work"
-                        className="block text-sm font-medium text-gray-700"
-                      >
+                      <label className="text-sm font-medium text-gray-700">
                         Location
                       </label>
                       <input
-                        id="location_of_work"
-                        name="location_of_work"
-                        value={editFormData?.location_of_work || ""}
-                        onChange={handleEditInputChange}
+                        name="location"
+                        value={editData.location ?? ""}
+                        onChange={handleEditInput}
                         className="w-full mt-1 p-2 border border-gray-300 rounded-md"
                       />
                     </div>
-
                     <div>
-                      <label
-                        htmlFor="employer"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Employer
+                      <label className="text-sm font-medium text-gray-700">
+                        Job Type
                       </label>
-                      <input
-                        id="employer"
-                        name="employer"
-                        value={editFormData?.employer || ""}
-                        onChange={handleEditInputChange}
+                      <select
+                        name="jobType"
+                        value={editData.jobType ?? ""}
+                        onChange={handleEditInput}
                         className="w-full mt-1 p-2 border border-gray-300 rounded-md"
-                      />
+                      >
+                        <option value="">— Select —</option>
+                        <option value="FULL_TIME">Full Time</option>
+                        <option value="PART_TIME">Part Time</option>
+                        <option value="CONTRACT">Contract</option>
+                        <option value="INTERNSHIP">Internship</option>
+                        <option value="REMOTE">Remote</option>
+                      </select>
                     </div>
-
                     <div>
-                      <label
-                        htmlFor="closing_date"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Closing Date
+                      <label className="text-sm font-medium text-gray-700">
+                        Description
                       </label>
-                      <input
-                        type="date"
-                        id="closing_date"
-                        name="closing_date"
-                        value={
-                          editFormData?.closing_date.toString().split("T")[0] ||
-                          ""
-                        }
-                        onChange={handleEditInputChange}
+                      <textarea
+                        name="description"
+                        value={editData.description ?? ""}
+                        onChange={handleEditInput}
+                        rows={3}
                         className="w-full mt-1 p-2 border border-gray-300 rounded-md"
                       />
                     </div>
-
-                    <div>
-                      <label
-                        htmlFor="application_link"
-                        className="block text-sm font-medium text-gray-700"
-                      >
-                        Application Link
-                      </label>
-                      <input
-                        type="url"
-                        id="application_link"
-                        name="application_link"
-                        value={editFormData?.application_link || ""}
-                        onChange={handleEditInputChange}
-                        className="w-full mt-1 p-2 border border-gray-300 rounded-md"
-                      />
-                    </div>
-
                     <div className="flex space-x-2">
                       <Button
                         className="bg-blue-600 hover:bg-blue-700 text-white"
-                        onClick={handleUpdateJob}
-                        disabled={loading}
+                        onClick={handleUpdate}
+                        disabled={isPending}
                       >
-                        {loading ? "Updating..." : "Update Job"}
+                        {isPending ? "Saving…" : "Save Changes"}
                       </Button>
                       <Button
                         className="bg-gray-200 hover:bg-gray-300 text-gray-800"
-                        onClick={handleCancelEdit}
-                        disabled={loading}
+                        onClick={() => setEditingId(null)}
                       >
                         Cancel
                       </Button>
                     </div>
                   </div>
+
+                /* Normal card view */
                 ) : (
                   <>
-                    <h3 className="text-xl font-semibold mb-2 text-gray-800">
-                      {job.job_title}
+                    <h3 className="text-lg font-semibold mb-1 text-gray-800">
+                      {job.title}
                     </h3>
-                    <p className="text-gray-600 mb-2">{job.employer}</p>
-                    <p className="text-gray-600 mb-2">{job.location_of_work}</p>
-                    <p className="text-sm text-gray-500 mb-4">
-                      Closing: {new Date(job.closing_date).toLocaleDateString()}
+                    <p className="text-gray-600 text-sm mb-1">{job.company}</p>
+                    {job.location && (
+                      <p className="text-gray-500 text-sm mb-1">{job.location}</p>
+                    )}
+                    {job.jobType && (
+                      <span className="inline-block text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full mb-2">
+                        {job.jobType}
+                      </span>
+                    )}
+                    <p className="text-xs text-gray-400 mb-4">
+                      {job.applicationCount} applicant
+                      {job.applicationCount !== 1 ? "s" : ""} ·{" "}
+                      {job.viewCount} view{job.viewCount !== 1 ? "s" : ""}
                     </p>
 
-                    <div className="mb-4 h-24 overflow-hidden text-ellipsis">
-                      <p className="text-gray-700 text-sm">
-                        {job.job_description.substring(0, 150)}
-                        {job.job_description.length > 150 ? "..." : ""}
-                      </p>
-                    </div>
-
-                    <div className="flex space-x-2 mt-4">
+                    <div className="flex space-x-2 flex-wrap gap-y-2">
+                      <Button
+                        className="bg-green-600 hover:bg-green-700 text-white text-sm flex-1"
+                        onClick={() =>
+                          setApplicantsJob({ id: job.id, title: job.title })
+                        }
+                      >
+                        Applicants ({job.applicationCount})
+                      </Button>
                       <Button
                         className="bg-blue-600 hover:bg-blue-700 text-white text-sm flex-1"
-                        onClick={() => handleEditClick(job)}
+                        onClick={() => startEdit(job)}
                       >
                         Edit
                       </Button>
                       <Button
                         className="bg-red-600 hover:bg-red-700 text-white text-sm flex-1"
-                        onClick={() => handleDeleteConfirm(job.job_id)}
+                        onClick={() => setDeleteConfirmId(job.id)}
                       >
                         Delete
                       </Button>
@@ -676,6 +511,15 @@ const JobDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Applicants Modal */}
+      {applicantsJob && (
+        <JobApplicants
+          jobId={applicantsJob.id}
+          jobTitle={applicantsJob.title}
+          onClose={() => setApplicantsJob(null)}
+        />
+      )}
     </div>
   );
 };

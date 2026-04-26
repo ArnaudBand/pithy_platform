@@ -6,6 +6,7 @@ import { Button } from "./ui/button";
 import { Eye, EyeOff, CheckCircle } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { z } from "zod";
+import { resetPassword } from "@/lib/actions/auth.actions";
 
 const resetPasswordSchema = z.object({
     password: z
@@ -85,32 +86,17 @@ const ResetPasswordForm = () => {
         setIsLoading(true);
 
         try {
-            const response = await fetch("http://localhost:8080/api/users/reset-password", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    token: token,
-                    newPassword: formData.password,
-                }),
-            });
+            const result = await resetPassword(token, formData.password);
 
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || "Password reset failed");
+            if (!result.success) {
+                toast.error(result.message ?? "Password reset failed. The link may have expired.");
+                return;
             }
 
             setResetSuccess(true);
-            toast.success("Password reset successfully!");
-
-        } catch (error) {
-            const errorMessage = error instanceof Error
-                ? error.message
-                : "Password reset failed. Please try again.";
-            toast.error(errorMessage);
-            console.error("Reset password error:", error);
+            toast.success(result.message ?? "Password reset successfully!");
+        } catch {
+            toast.error("Something went wrong. Please request a new reset link.");
         } finally {
             setIsLoading(false);
         }
@@ -137,7 +123,7 @@ const ResetPasswordForm = () => {
                     </p>
 
                     <Button
-                        onClick={() => router.push("/signIn")}
+                        onClick={() => router.push("/human-services/signIn")}
                         className="w-full bg-gradient-to-r from-[#5AC35A] to-[#00AE76] text-white hover:opacity-90"
                     >
                         Continue to Sign In
@@ -158,7 +144,7 @@ const ResetPasswordForm = () => {
                         This password reset link is invalid or has expired.
                     </p>
                     <Button
-                        onClick={() => router.push("/forgot-password")}
+                        onClick={() => router.push("/human-services/forgot-password")}
                         className="bg-gradient-to-r from-[#5AC35A] to-[#00AE76] text-white"
                     >
                         Request New Reset Link
@@ -259,7 +245,7 @@ const ResetPasswordForm = () => {
                         <p className="text-sm text-gray-600">
                             Remember your password?{" "}
                             <a
-                                href="/signIn"
+                                href="/human-services/signIn"
                                 className="text-green-600 font-medium hover:underline"
                             >
                                 Sign in

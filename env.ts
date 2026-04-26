@@ -1,9 +1,4 @@
 const env = {
-  appwrite: {
-    endpoint: String(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT),
-    projectId: String(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID),
-    apiKey: String(process.env.APPWRITE_API_KEY)
-  },
   emails: {
     apikey: String(process.env.RESEND_API_KEY)
   },
@@ -15,6 +10,10 @@ const env = {
   },
   endpoint: {
     base: String(process.env.NEXT_PUBLIC_BASE_URL),
+  },
+  // Java Spring Boot backend
+  api: {
+    baseUrl: process.env.NEXT_PUBLIC_API_URL?.trim() || "http://localhost:8080",
   }
 }
 

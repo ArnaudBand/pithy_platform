@@ -1,26 +1,24 @@
 "use client";
 
 import React, { useState } from "react";
-import { Search, Menu, X } from "lucide-react";
+import { Search, Menu, X, ShieldCheck } from "lucide-react";
 import Logo from "./Logo";
 import { IoMdNotificationsOutline } from "react-icons/io";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Button } from "./ui/button";
-import { useAuthStore } from "@/lib/store/useAuthStore";
-import { UserInfo } from "@/types/schema";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { logout } from "@/lib/actions/auth.actions";
 
 interface DashboardNavBarProps {
   children: React.ReactNode;
+  isAdmin?: boolean;
 }
 
-const DashboardNavBar: React.FC<DashboardNavBarProps> = ({ children }) => {
+const DashboardNavBar: React.FC<DashboardNavBarProps> = ({ children, isAdmin = false }) => {
   const router = useRouter();
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  const { user, signout } = useAuthStore((state) => state as unknown as UserInfo);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -28,9 +26,9 @@ const DashboardNavBar: React.FC<DashboardNavBarProps> = ({ children }) => {
 
   const handleLogout = async () => {
     try {
-      await signout();
+      await logout();
       toast.success("Thank You For Visiting Pithy Means, See You Soon!");
-      router.push("/");
+      router.push("/human-services/signIn");
     } catch (error) {
       console.error("Logout failed", error);
       toast.error("Something Went Wrong. Please Try Again Later!");
@@ -91,6 +89,15 @@ const DashboardNavBar: React.FC<DashboardNavBarProps> = ({ children }) => {
           ${isMobileMenuOpen ? "block" : "hidden lg:flex"}
         `}
         >
+          {isAdmin && (
+            <button
+              onClick={() => router.push("/human-services/admin")}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span className="hidden sm:inline">Admin Panel</span>
+            </button>
+          )}
           <div className="flex items-center justify-center">
             <IoMdNotificationsOutline className="text-black h-8 w-8" />
           </div>
@@ -98,7 +105,7 @@ const DashboardNavBar: React.FC<DashboardNavBarProps> = ({ children }) => {
             <Popover>
               <PopoverTrigger asChild>
                 <Button className="bg-black py-1.5 px-3 rounded-full border border-white shadow-md text-white">
-                  {user?.firstname?.charAt(0)?.toUpperCase() ?? "Guest"}
+                  JD
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-fit p-2 bg-green-50">

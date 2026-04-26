@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { getJobs } from "@/lib/actions/user.actions";
-import { Job } from "@/types/schema";
+import { getAllJobs, JobSummaryDTO } from "@/lib/actions/job.actions";
 import { useRouter } from "next/navigation";
 import { FaBlackTie } from "react-icons/fa6";
 import { FaMarker } from "react-icons/fa";
@@ -12,7 +11,7 @@ import { formatDateWithOrdinal } from "@/lib/utils";
 import JobSearch from "./jobSearch";
 
 const JobList = () => {
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobs, setJobs] = useState<JobSummaryDTO[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
@@ -24,9 +23,10 @@ const JobList = () => {
       setLoading(true);
       setError(null);
       try {
-        const data = await getJobs();
+        const result = await getAllJobs();
+        if (!result.success) throw new Error(result.message);
         toast.success("Jobs fetched successfully");
-        setJobs(data.documents || []);
+        setJobs(result.data?.content ?? []);
       } catch (err) {
         toast.error("Failed to fetch jobs. Please try again.");
         setError("Failed to fetch jobs. Please try again.");
@@ -40,7 +40,7 @@ const JobList = () => {
   }, []);
 
   // Handle search results from JobSearch component
-  const handleSearchResults = (searchResults: Job[]) => {
+  const handleSearchResults = (searchResults: JobSummaryDTO[]) => {
     setJobs(searchResults);
     // setSearchPerformed(true);
   };
@@ -132,7 +132,7 @@ const JobList = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10 w-full mx-auto">
               {jobs.map((job, index) => (
                 <div
-                  key={job.job_id}
+                  key={job.id}
                   className="group relative perspective-1000"
                   onMouseEnter={() => setHoverIndex(index)}
                   onMouseLeave={() => setHoverIndex(null)}
@@ -190,7 +190,7 @@ const JobList = () => {
                           <div className="h-10 w-1 bg-gradient-to-b from-green-400 to-green-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                           <div>
                             <h2 className="text-2xl font-bold text-white group-hover:text-green-300 transition-colors duration-300">
-                              {job.job_title || "Untitled Position"}
+                              {job.title || "Untitled Position"}
                             </h2>
                             <div className="h-px w-16 bg-green-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                           </div>
@@ -199,7 +199,7 @@ const JobList = () => {
                         {/* Holographic description */}
                         <div className="relative px-4 py-3 bg-black bg-opacity-20 border-l-2 border-green-800 group-hover:border-green-500 rounded backdrop-blur-sm transition-all duration-300">
                           <p className="text-sm text-gray-300 group-hover:text-green-50 leading-relaxed pr-4">
-                            {job.job_description.slice(0, 100) + "..."}
+                            {job.title.length > 100 ? job.title.slice(0, 100) + "..." : job.title}
                           </p>
                           <div className="absolute top-0 right-0 h-full w-4 bg-gradient-to-l from-green-500/10 to-transparent opacity-0 group-hover:opacity-100"></div>
                         </div>
@@ -219,7 +219,7 @@ const JobList = () => {
                                 EMPLOYER
                               </span>
                               <p className="text-sm font-semibold text-white group-hover:text-green-200 transition-colors duration-300">
-                                {job.employer || "Not specified"}
+                                {job.company || "Not specified"}
                               </p>
                             </div>
                           </div>
@@ -234,10 +234,10 @@ const JobList = () => {
                             </div>
                             <div>
                               <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">
-                                COUNTRY OF WORK
+                                LOCATION
                               </span>
                               <p className="text-sm font-semibold text-white group-hover:text-green-200 transition-colors duration-300">
-                                {job.country_of_work || "Not specified"}
+                                {job.location || "Not specified"}
                               </p>
                             </div>
                           </div>
@@ -252,12 +252,12 @@ const JobList = () => {
                             </div>
                             <div>
                               <span className="text-xs text-gray-500 uppercase tracking-wider font-medium">
-                                CLOSING DATE
+                                EXPIRES
                               </span>
                               <p className="text-sm font-semibold text-white group-hover:text-green-200 transition-colors duration-300">
-                                {job.closing_date
+                                {job.createdAt
                                   ? formatDateWithOrdinal(
-                                      new Date(job.closing_date)
+                                      new Date(job.createdAt)
                                     )
                                   : "Not specified"}
                               </p>
@@ -268,7 +268,7 @@ const JobList = () => {
                         {/* Ultra-futuristic button */}
                         <button
                           onClick={() =>
-                            router.push(`/dashboard/jobs/${job.job_id}`)
+                            router.push(`/human-services/dashboard/jobs/${job.id}`)
                           }
                           className="relative w-full py-3 mt-4 rounded-lg bg-black bg-opacity-40 border border-gray-800 group-hover:border-green-600 text-white font-medium overflow-hidden transition-all duration-500 group-hover:shadow-lg group-hover:shadow-green-500/20"
                         >

@@ -6,6 +6,7 @@ import { Button } from "./ui/button";
 import { MoveLeft, Mail } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import { z } from "zod";
+import { forgotPassword } from "@/lib/actions/auth.actions";
 
 const emailSchema = z.object({
     email: z.string().email("Please enter a valid email address"),
@@ -20,11 +21,9 @@ const ForgotPasswordForm = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Validate email
         try {
             emailSchema.parse({ email });
         } catch (error) {
-            console.error("Validation error:", error);
             if (error instanceof z.ZodError) {
                 toast.error(error.errors[0].message);
                 return;
@@ -34,23 +33,12 @@ const ForgotPasswordForm = () => {
         setIsLoading(true);
 
         try {
-            const response = await fetch(
-                `http://localhost:8080/api/users/forgot-password?email=${encodeURIComponent(email)}`,
-                {
-                    method: "POST",
-                }
-            );
-
-            await response.json();
-
-            // Always show success message for security (don't reveal if email exists)
+            // forgotPassword() sends { email } as JSON body — corrects the old
+            // query-param bug. The backend always succeeds to prevent email enumeration.
+            await forgotPassword(email);
             setEmailSent(true);
-            toast.success("If an account exists with this email, a password reset link has been sent.");
-
-        } catch (error) {
-            // Still show success for security
-            setEmailSent(true);
-            console.error("Password reset error:", error);
+        } catch {
+            setEmailSent(true); // still show success for security
         } finally {
             setIsLoading(false);
         }
@@ -92,7 +80,7 @@ const ForgotPasswordForm = () => {
                     </div>
 
                     <Button
-                        onClick={() => router.push("/signIn")}
+                        onClick={() => router.push("/human-services/signIn")}
                         className="w-full bg-gradient-to-r from-[#5AC35A] to-[#00AE76] text-white hover:opacity-90"
                     >
                         Back to Sign In
@@ -105,7 +93,7 @@ const ForgotPasswordForm = () => {
     return (
         <div className="w-full min-h-screen mx-auto p-4 sm:p-6 bg-white flex justify-center items-center flex-col relative">
             <Button
-                onClick={() => router.push("/signIn")}
+                onClick={() => router.push("/human-services/signIn")}
                 className="absolute top-4 right-4 bg-transparent text-gray-800 hover:text-zinc-200 hover:bg-green-500"
             >
                 <MoveLeft className="mr-2" />
@@ -153,7 +141,7 @@ const ForgotPasswordForm = () => {
                         <p className="text-sm text-gray-600">
                             Remember your password?{" "}
                             <a
-                                href="/signIn"
+                                href="/human-services/signIn"
                                 className="text-green-600 font-medium hover:underline"
                             >
                                 Sign in
