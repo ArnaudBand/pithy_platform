@@ -380,9 +380,9 @@ export async function deleteUser(id: string) {
  * Used after login to decide whether to redirect to dashboard or create-profile.
  * Requires a valid JWT cookie (set by login()).
  */
-export async function hasProfile(userId: string): Promise<boolean> {
+export async function hasProfile(userId: string, token?: string): Promise<boolean> {
   try {
-    await apiGet(`/api/profiles/${userId}`);
+    await apiGet(`/api/profiles/${userId}`, true, token);
     return true;
   } catch {
     return false;
