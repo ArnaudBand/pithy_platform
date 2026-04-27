@@ -26,14 +26,17 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       // getCurrentUser() reads the httpOnly JWT cookie server-side.
       // Returns null when the user is not logged in.
       const user = await getCurrentUser();
+      console.log("Dashboard layout - getCurrentUser result:", JSON.stringify(user));
 
       if (!user) {
+        console.log("No user found, redirecting to signIn");
         router.replace("/human-services/signIn");
         return;
       }
 
       // Admins don't need a profile — send them to the admin panel.
       if (user.role === "ADMIN") {
+        console.log("Admin user found, redirecting to admin panel");
         router.replace("/human-services/admin");
         return;
       }
