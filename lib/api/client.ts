@@ -57,8 +57,10 @@ async function handleResponse<T>(res: Response): Promise<T> {
 // Public methods
 // ---------------------------------------------------------------------------
 
-export async function apiGet<T>(path: string, auth = true): Promise<T> {
-  const headers = await getHeaders(auth);
+export async function apiGet<T>(path: string, auth = true, token?: string): Promise<T> {
+  const headers = token
+    ? { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
+    : await getHeaders(auth);
   const res = await fetch(`${BASE_URL}${path}`, {
     method: "GET",
     headers,
