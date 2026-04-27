@@ -1,5 +1,3 @@
-"use client";
-
 import { redirect } from "next/navigation";
 import { getCurrentUser, hasProfile } from "@/lib/actions/auth.actions";
 import DashboardNavBar from "@/components/dashboard_navBar";
