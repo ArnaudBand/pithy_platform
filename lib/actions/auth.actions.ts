@@ -145,7 +145,7 @@ export async function login(email: string, password: string) {
     // cookie we just set is already readable by apiGet (no cross-request race).
     let profileExists = false;
     if (role !== "ADMIN") {
-      profileExists = await hasProfile(data.id);
+      profileExists = await hasProfile(data.id, data.token);
     }
 
     return { success: true, user: { ...data, role }, profileExists };
