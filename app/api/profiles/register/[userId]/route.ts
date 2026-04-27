@@ -12,7 +12,7 @@ export async function POST(
 
     const body = await request.json();
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL?.trim() || "http://localhost:8080";
+  const backendUrl = process.env.INTERNAL_API_URL?.trim() || "http://localhost:8080";
 
     const response = await fetch(
       `${backendUrl}/api/profiles/register/${userId}`,
