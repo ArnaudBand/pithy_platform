@@ -13,7 +13,9 @@ const env = {
   },
   // Java Spring Boot backend
   api: {
-    baseUrl: process.env.NEXT_PUBLIC_API_URL?.trim() || "http://localhost:8080",
+    baseUrl: (typeof window === "undefined"
+      ? (process.env.INTERNAL_API_URL || "http://localhost:8080")
+      : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080")).trim(),
   }
 }
 
