@@ -8,6 +8,9 @@ const __dirname = dirname(__filename);
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
+    generateBuildId: async () => {
+    return `build-${Date.now()}`;
+  },
   compiler: {
     removeConsole: process.env.NODE_ENV === "development",
   },
