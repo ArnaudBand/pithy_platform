@@ -73,7 +73,7 @@ const SignInLoginForm = () => {
 
       // Admins skip the profile check and go straight to the admin panel.
       if (role === "ADMIN") {
-        router.replace("/human-services/admin");
+        window.location.href = "/human-services/admin";
         return;
       }
 
@@ -85,7 +85,7 @@ const SignInLoginForm = () => {
         sessionStorage.setItem("pithy_pending_user_id", result.user!.id);
         router.replace(`/human-services/create-profile?userId=${result.user!.id}`);
       } else {
-        router.replace("/human-services/dashboard");
+        window.location.href = "/human-services/dashboard";
       }
     } catch {
       toast.error("Something went wrong. Please try again.");
